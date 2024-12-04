@@ -35,29 +35,29 @@ class DatabaseQueryExecutor<QueryResult extends z.ZodTypeAny> {
     return this;
   }
 
-  // public handler(handler: Handler<QueryResult>) {
-  //   try {
-  //     return async () => {
-  //       const [rows, fields] = await this.db.query(
-  //         this.sqlCommand,
-  //         this.queryValues
-  //       );
-  //       if (this.queryResultSchema) {
-  //         const validatedRows = this.queryResultSchema.safeParse(rows);
-  //         if (!validatedRows.success) {
-  //           throw new Error("Validate Failed");
-  //         }
-  //         const result = await handler({
-  //           queryResult: validatedRows.data,
-  //         });
-  //         return result;
-  //       }
-  //       throw new Error("Query result schema is not defined");
-  //     };
-  //   } catch (error) {
-  //     throw Error(String(error));
-  //   }
-  // }
+  public handler(handler: Handler<QueryResult>) {
+    try {
+      return async () => {
+        const [rows, fields] = await this.db.query(
+          this.sqlCommand,
+          this.queryValues
+        );
+        if (this.queryResultSchema) {
+          const validatedRows = this.queryResultSchema.safeParse(rows);
+          if (!validatedRows.success) {
+            throw new Error("Validate Failed");
+          }
+          const result = await handler({
+            queryResult: validatedRows.data,
+          });
+          return result;
+        }
+        throw new Error("Query result schema is not defined");
+      };
+    } catch (error) {
+      throw Error(String(error));
+    }
+  }
 
   public async run(): Promise<IQueryResponse<z.infer<QueryResult>>> {
     try {

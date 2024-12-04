@@ -62,10 +62,12 @@ export class ElysiaServer {
           ` - Status: [${set.headers["access-control-allow-methods"]}] "${path}" | ${set.status}`
         );
       })
-      .error({ HttpError })
+      .error({ HttpError, Error })
       .onError(({ code, error, set }) => {
         switch (code) {
           case "HttpError":
+            return globalErrorHandler(error, set);
+          case "Error":
             return globalErrorHandler(error, set);
         }
       });
@@ -85,28 +87,30 @@ export class ElysiaServer {
   }
 
   private initRouters() {
-    this.app
-      .group("/api", (app) =>
+    this.app.group("/api", (app) =>
+      app
         //
         // Tests
         //
-        app.group(
+        .group(
           "/tests",
           { tags: ["Test"], beforeHandle: verifyAuth },
           (app) =>
             app
               .get("/auth", () => {
-                throw new HttpError(404, "test123", "error");
                 return { message: "Hello Authentication" };
               })
               .get("", () => {
                 return { message: "Hello Test 123" };
               })
         )
-      )
-      .group("/users", { tags: ["Users"] }, (app) =>
-        app.post("", userController.create).get("", userController.list)
-      );
+        //
+        // Users
+        //
+        .group("/users", { tags: ["Users"] }, (app) =>
+          app.post("", userController.create).get("", userController.list)
+        )
+    );
   }
 
   public start(port: number) {

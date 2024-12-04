@@ -1,28 +1,37 @@
 import { Context } from "elysia";
 import { userRepository } from "../repositories/users.repository";
+import { apiHandler } from "../utils/api.utils";
+import { z } from "zod";
 
 export const userController = {
   async create(context: Context) {
-    const body = context.body as {
-      username: string;
-      name: string;
-      image?: string;
-    };
-    const result = await userRepository.create(body);
+    // console.log(context.body);
+    return apiHandler
+      .body(
+        z.object({
+          username: z.string(),
+          name: z.string(),
+        })
+      )
+      .withHandling(context, async ({ body }) => {
+        // const body = context.body as {
+        //   username: string;
+        //   name: string;
+        //   image?: string;
+        // };
+        console.log("body", body);
+        // const result = await userRepository.create(body);
 
-    return {
-      ok: true,
-      message: "Created",
-      payload: {
-        data: result,
-      },
-    };
+        return { payload: { data: {} } };
+      });
   },
 
-  async list() {
-    const result = await userRepository.findAll();
-    result.queryResult[0].username;
+  async list(context: Context) {
+    return apiHandler.withHandling(context, async () => {
+      const result = await userRepository.findAll();
+      // console.log(result);
 
-    return result;
+      return { payload: { data: result.queryResult } };
+    });
   },
 };
