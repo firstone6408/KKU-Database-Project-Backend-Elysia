@@ -2,7 +2,7 @@ import { Context } from "elysia";
 import { userRepository } from "../repositories/users.repository";
 
 export const userController = {
-  create: async (context: Context) => {
+  async create(context: Context) {
     const body = context.body as {
       username: string;
       name: string;
@@ -17,5 +17,12 @@ export const userController = {
         data: result,
       },
     };
+  },
+
+  async list() {
+    const result = await userRepository.findAll();
+    result.queryResult[0].username;
+
+    return result;
   },
 };

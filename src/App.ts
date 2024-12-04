@@ -5,6 +5,10 @@ import Elysia from "elysia";
 import { database as db } from "./database/connect.db";
 import { verifyAuth } from "./middlewares/auth.middleware";
 import { userController } from "./controllers/users.controller";
+import {
+  globalErrorHandler,
+  HttpError,
+} from "./middlewares/error.middleware";
 
 export class ElysiaServer {
   private readonly app: Elysia;
@@ -50,7 +54,21 @@ export class ElysiaServer {
   private initConfig() {}
 
   private initMiddlewares() {
-    this.app.use(cors()).use(staticPlugin());
+    this.app
+      .use(cors())
+      .use(staticPlugin())
+      .onAfterResponse(({ set, path }) => {
+        console.info(
+          ` - Status: [${set.headers["access-control-allow-methods"]}] "${path}" | ${set.status}`
+        );
+      })
+      .error({ HttpError })
+      .onError(({ code, error, set }) => {
+        switch (code) {
+          case "HttpError":
+            return globalErrorHandler(error, set);
+        }
+      });
   }
 
   private initSwagger() {
@@ -72,24 +90,22 @@ export class ElysiaServer {
         //
         // Tests
         //
-        app.group("/tests", { tags: ["Test"] }, (app) =>
-          app
-            .guard(
-              {
-                beforeHandle: verifyAuth,
-              },
-              (app) =>
-                app.get("/auth", () => {
-                  return { message: "Hello Authentication" };
-                })
-            )
-            .get("", () => {
-              return { message: "Hello Test 123" };
-            })
+        app.group(
+          "/tests",
+          { tags: ["Test"], beforeHandle: verifyAuth },
+          (app) =>
+            app
+              .get("/auth", () => {
+                throw new HttpError(404, "test123", "error");
+                return { message: "Hello Authentication" };
+              })
+              .get("", () => {
+                return { message: "Hello Test 123" };
+              })
         )
       )
       .group("/users", { tags: ["Users"] }, (app) =>
-        app.post("", userController.create)
+        app.post("", userController.create).get("", userController.list)
       );
   }
 
