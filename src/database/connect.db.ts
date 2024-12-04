@@ -56,11 +56,11 @@ export const database = {
       // console.log(sql);
 
       if (sql && result.length <= 0) {
+        await this.pool.query(sql);
         await this.pool.query(
           /*sql*/ `INSERT INTO _migrations(name) VALUES (?)`,
           [migrateName]
         );
-        await this.pool.query(sql);
         console.log(` - Database migrate ${migrateName} success`);
       }
     }

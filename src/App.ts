@@ -58,7 +58,7 @@ export class ElysiaServer {
       .use(cors())
       .use(staticPlugin())
       .onAfterResponse(({ set, path }) => {
-        console.info(
+        console.log(
           ` - Status: [${set.headers["access-control-allow-methods"]}] "${path}" | ${set.status}`
         );
       })
@@ -108,7 +108,12 @@ export class ElysiaServer {
         // Users
         //
         .group("/users", { tags: ["Users"] }, (app) =>
-          app.post("", userController.create).get("", userController.list)
+          app
+            .get("", userController.list)
+            .get("/:id", userController.getById)
+            .post("", userController.create)
+            .put("/:id", userController.update)
+            .delete("/:id", userController.remove)
         )
     );
   }
