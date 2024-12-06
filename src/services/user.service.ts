@@ -1,11 +1,12 @@
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
-import { generateToken } from "../utils/crypto.utils";
+import { hashPassword } from "../utils/crypto.utils";
+import { Jwt } from "../schemas/lib.schema";
 
 const db = kkuDB.kkuPrismaClient;
 
 export class UserService {
-  public static async create(data: {
+  public static async create(options: {
     username: string;
     password: string;
     email: string;
@@ -17,9 +18,10 @@ export class UserService {
   }) {
     const existingUser = await db.user.findFirst({
       where: {
-        OR: [{ username: data.username }, { email: data.email }],
+        OR: [{ username: options.username }, { email: options.email }],
       },
     });
+
     if (existingUser) {
       throw new HttpError({
         statusCode: 400,
@@ -27,17 +29,31 @@ export class UserService {
         type: "fail",
       });
     }
-    const hashedPassword = await generateToken("");
+
+    const hashedPassword = await hashPassword(options.password);
+
     const newData = {
-      username: data.username,
+      username: options.username,
       password: hashedPassword,
-      email: data.email,
-      fullName: data.fullName,
-      role: data.role,
-      image: data.image ?? undefined,
-      phoneNumber: data.phoneNumber ?? undefined,
-      branchId: data.branchId ?? undefined,
+      email: options.email,
+      fullName: options.fullName,
+      role: options.role,
+      image: options.image ?? undefined,
+      phoneNumber: options.phoneNumber ?? undefined,
+      branchId: options.branchId ?? undefined,
     };
     return await db.user.create({ data: newData });
+  }
+
+  public static async list() {
+    return await db.user.findMany()
+  }
+
+  public static async getById(id: number) {
+    return await db.user.findUnique({
+      where: {
+        id: id
+      }
+    })
   }
 }

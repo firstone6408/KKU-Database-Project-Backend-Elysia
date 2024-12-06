@@ -3,12 +3,12 @@ import staticPlugin from "@elysiajs/static";
 import swagger from "@elysiajs/swagger";
 import Elysia from "elysia";
 import { kkuDB as db } from "./database/prisma/kku.prisma";
-import { verifyAuth } from "./middlewares/auth.middleware";
-import { userController } from "./controllers/user.controller";
 import {
   globalErrorHandler,
   HttpError,
 } from "./middlewares/error.middleware";
+import { userRouters } from "./routes/user.routes";
+import { authRouters } from "./routes/auth.routes";
 
 export class ElysiaServer {
   private readonly app: Elysia;
@@ -37,21 +37,20 @@ export class ElysiaServer {
       );
     } catch (error) {
       console.error(
-        `[Server: ${
-          this.app.server?.hostname
+        `[Server: ${this.app.server?.hostname
         }] Database connection failed: ${String(error)}`
       );
       process.exit(1);
     }
   }
 
-  private initConfig() {}
+  private initConfig() { }
 
   private initMiddlewares() {
     this.app
       .use(cors())
       .use(staticPlugin())
-      .onAfterResponse(({ set, path, headers }) => {
+      .onAfterResponse(({ set, headers }) => {
         console.log(
           ` - Request: [${set.headers["access-control-allow-methods"]}] "${headers["referer"]}" | ${set.status} | Platform: ${headers["sec-ch-ua-platform"]}`
         );
@@ -67,12 +66,6 @@ export class ElysiaServer {
             return globalErrorHandler(error.name, set);
         }
       })
-      .state({
-        user: {},
-      })
-      .post("/", async ({ store }) => {
-        store.user;
-      });
   }
 
   private initSwagger() {
@@ -93,40 +86,7 @@ export class ElysiaServer {
   }
 
   private initRouters() {
-    this.app.group("/api", (app) =>
-      app
-        //
-        // Tests
-        //
-        .group(
-          "/tests",
-          { tags: ["Test"], beforeHandle: verifyAuth },
-          (app) =>
-            app
-              .get("/auth", () => {
-                return { message: "Hello Authentication" };
-              })
-              .get("", () => {
-                return { message: "Hello Test 123" };
-              })
-        )
-        .group("/auth", { tags: ["Authen"] }, (app) =>
-          app.post("/login", () => {
-            return "Authenication";
-          })
-        )
-        //
-        // Users
-        //
-        .group("/users", { tags: ["Users"] }, (app) =>
-          app
-            .get("", userController.list)
-            .get("/:id", userController.getById)
-            .post("", userController.create)
-            .put("/:id", userController.update)
-            .delete("/:id", userController.remove)
-        )
-    );
+    this.app.use(userRouters).use(authRouters)
   }
 
   public start(port: number) {
