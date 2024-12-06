@@ -14,31 +14,36 @@ export const database = {
     queueLimit: 0,
   }),
 
-  async createTableIfNotExist() {
+  async createTableIfNotExist()
+  {
     const modelsDir = path.join(__dirname, "models");
     const sqlFiles = readdirSync(modelsDir).filter((file) =>
       file.endsWith(".sql")
     );
     //console.log(sqlFiles.length);
-    for (let i = 0; i < sqlFiles.length; i += 1) {
+    for (let i = 0; i < sqlFiles.length; i += 1)
+    {
       const sqlPath = path.join(modelsDir, sqlFiles[i]);
       const sql = await Bun.file(sqlPath).text();
       //console.log(sqlPath);
-      if (sql) {
+      if (sql)
+      {
         this.pool.query(sql);
         //console.log(sql);
       }
     }
   },
 
-  async migrations() {
+  async migrations()
+  {
     const modelsDir = path.join(__dirname, "models/migrations");
     const sqlFiles = readdirSync(modelsDir).filter((file) =>
       file.endsWith(".sql")
     );
 
     //console.log(sqlFiles.length);
-    for (let i = 0; i < sqlFiles.length; i += 1) {
+    for (let i = 0; i < sqlFiles.length; i += 1)
+    {
       const sqlPath = path.join(modelsDir, sqlFiles[i]);
       const sql = await Bun.file(sqlPath).text();
       const migrateName = sqlFiles[i].split(".")[0];
@@ -47,7 +52,8 @@ export const database = {
         [migrateName]
       );
 
-      interface Migrate {
+      interface Migrate
+      {
         name: string;
       }
 
@@ -55,7 +61,8 @@ export const database = {
       // console.log(result);
       // console.log(sql);
 
-      if (sql && result.length <= 0) {
+      if (sql && result.length <= 0)
+      {
         await this.pool.query(sql);
         await this.pool.query(
           /*sql*/ `INSERT INTO _migrations(name) VALUES (?)`,
@@ -66,23 +73,29 @@ export const database = {
     }
   },
 
-  async testConnection(): Promise<void> {
-    try {
+  async testConnection(): Promise<void>
+  {
+    try
+    {
       const connection = await this.pool.getConnection();
       await connection.ping();
       connection.release();
       // console.log("[Database] Connection successful");
-    } catch (error) {
+    } catch (error)
+    {
       console.error("[Database] Connection failed:", error);
       throw error;
     }
   },
 
-  async disconnect(): Promise<void> {
-    try {
+  async disconnect(): Promise<void>
+  {
+    try
+    {
       await this.pool.end();
       console.log("[Database] Connection pool closed");
-    } catch (error) {
+    } catch (error)
+    {
       console.error("[Database] Failed to close connection pool:", error);
     }
   },

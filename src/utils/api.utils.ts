@@ -4,7 +4,8 @@ import { HttpError } from "../middlewares/error.middleware";
 
 export type MaybePromise<T> = T | Promise<T>;
 
-interface IResponse<T> {
+interface IResponse<T>
+{
   ok?: boolean;
   message?: string;
   payload: {
@@ -28,7 +29,8 @@ class ApiRequestHandler<
   RequestQuery extends z.ZodTypeAny,
   RequestParams extends z.ZodTypeAny,
   RequestBody extends z.ZodTypeAny
-> {
+>
+{
   private requestSchema: {
     params?: z.ZodTypeAny;
     query?: z.ZodTypeAny;
@@ -36,7 +38,8 @@ class ApiRequestHandler<
   } = {};
   private filter?: z.ZodTypeAny;
 
-  public query<Query extends z.ZodTypeAny>(requestSchema: Query) {
+  public query<Query extends z.ZodTypeAny>(requestSchema: Query)
+  {
     this.requestSchema.query = requestSchema;
     return this as unknown as ApiRequestHandler<
       Query,
@@ -45,7 +48,8 @@ class ApiRequestHandler<
     >;
   }
 
-  public body<Body extends z.ZodTypeAny>(requestSchema: Body) {
+  public body<Body extends z.ZodTypeAny>(requestSchema: Body)
+  {
     this.requestSchema.body = requestSchema;
     return this as unknown as ApiRequestHandler<
       RequestQuery,
@@ -54,7 +58,8 @@ class ApiRequestHandler<
     >;
   }
 
-  public params<Params extends z.ZodTypeAny>(requestSchema: Params) {
+  public params<Params extends z.ZodTypeAny>(requestSchema: Params)
+  {
     this.requestSchema.params = requestSchema;
     return this as unknown as ApiRequestHandler<
       RequestQuery,
@@ -63,16 +68,20 @@ class ApiRequestHandler<
     >;
   }
 
-  public applyFilter<Filter extends z.ZodTypeAny>(filter: Filter) {
+  public applyFilter<Filter extends z.ZodTypeAny>(filter: Filter)
+  {
     this.filter = filter;
     return this;
   }
 
-  private handleZodError(error: unknown) {
-    if (error instanceof z.ZodError) {
+  private handleZodError(error: unknown)
+  {
+    if (error instanceof z.ZodError)
+    {
       console.log(error.errors);
       const errorMessages = error.errors
-        .map((err) => {
+        .map((err) =>
+        {
           return `${err.path}: ${err.message}`;
         })
         .join(", ");
@@ -87,8 +96,10 @@ class ApiRequestHandler<
   public async validateAndProcessRequest<T>(
     context: Context,
     handler: TypeHandler<RequestQuery, RequestParams, RequestBody, T>
-  ) {
-    try {
+  )
+  {
+    try
+    {
       // const context = params1.context;
 
       let validatedParams = context.params;
@@ -99,27 +110,37 @@ class ApiRequestHandler<
 
       // console.log("ok");
 
-      if (this.requestSchema.query) {
+      if (this.requestSchema.query)
+      {
         //  console.log("123");
-        try {
+        try
+        {
           validatedParams = this.requestSchema.query.parse(context.query);
-        } catch (error) {
+        } catch (error)
+        {
           this.handleZodError(error);
         }
       }
-      if (this.requestSchema.params) {
+      if (this.requestSchema.params)
+      {
         // console.log("1234");
-        try {
+        try
+        {
           validatedQuery = this.requestSchema.params.parse(context.params);
-        } catch (error) {
+        } catch (error)
+        {
           this.handleZodError(error);
         }
       }
-      if (this.requestSchema.body) {
+      if (this.requestSchema.body)
+      {
         // console.log("1235");
-        try {
+        try
+        {
           validatedBody = this.requestSchema.body.parse(context.body);
-        } catch (error) {
+        }
+        catch (error)
+        {
           this.handleZodError(error);
         }
       }
@@ -130,18 +151,25 @@ class ApiRequestHandler<
         body: validatedBody,
       });
 
-      if (result.statusCode) {
+      if (result.statusCode)
+      {
         context.set.status = result.statusCode;
-      } else {
+      }
+      else
+      {
         context.set.status = 200;
       }
 
       let payload = result.payload;
       // filter payload
-      if (this.filter) {
-        try {
+      if (this.filter)
+      {
+        try
+        {
           payload = this.filter.parse(payload);
-        } catch (error) {
+        }
+        catch (error)
+        {
           this.handleZodError(error);
         }
       }
@@ -151,7 +179,9 @@ class ApiRequestHandler<
         message: result.message ?? "Call API Success",
         payload: payload,
       };
-    } catch (error) {
+    }
+    catch (error)
+    {
       throw error;
     }
   }

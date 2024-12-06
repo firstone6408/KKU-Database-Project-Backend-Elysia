@@ -4,7 +4,8 @@ import { HTTPHeaders } from "elysia/dist/types";
 
 type MaybePromise<T> = T | Promise<T>;
 
-interface IResponse<T> {
+interface IResponse<T>
+{
   ok?: boolean;
   message?: string;
   payload: {
@@ -14,17 +15,21 @@ interface IResponse<T> {
 }
 
 export async function withRequestHandling<T>(
-  params1: {
-    set: {
-      headers: HTTPHeaders;
-      status?: number | keyof StatusMap;
-      redirect?: string;
-      cookie?: Record<string, ElysiaCookie>;
-    }
-  },
+  params1:
+    {
+      set:
+      {
+        headers: HTTPHeaders;
+        status?: number | keyof StatusMap;
+        redirect?: string;
+        cookie?: Record<string, ElysiaCookie>;
+      }
+    },
   fn: (...args: any[]) => MaybePromise<IResponse<T>>
-) {
-  try {
+)
+{
+  try
+  {
     const { set } = params1
     const result = await fn();
     //console.log(result)
@@ -34,7 +39,9 @@ export async function withRequestHandling<T>(
       message: result.message ?? "Call api success",
       payload: result.payload
     }
-  } catch (error) {
+  }
+  catch (error)
+  {
     throw error;
   }
 }

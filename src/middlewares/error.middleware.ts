@@ -1,17 +1,22 @@
 import { StatusMap } from "elysia";
 
-export class HttpError extends Error {
+export class HttpError extends Error
+{
   public statusCode: number | keyof StatusMap;
   public type: "error" | "fail";
-  constructor({
-    statusCode,
-    message,
-    type = "error",
-  }: {
-    statusCode: number | keyof StatusMap;
-    message: string;
-    type?: "error" | "fail";
-  }) {
+  constructor(
+    {
+      statusCode,
+      message,
+      type = "error",
+    }:
+      {
+        statusCode: number | keyof StatusMap;
+        message: string;
+        type?: "error" | "fail";
+      }
+  )
+  {
     super(message);
     this.name = "HttpError";
     this.statusCode = statusCode;
@@ -19,22 +24,27 @@ export class HttpError extends Error {
   }
 }
 
-export function globalErrorHandler(error: unknown, set: any) {
+export function globalErrorHandler(error: unknown, set: any)
+{
   let statusCode: number | keyof StatusMap = 500;
   let message = "";
   let type = "Error";
 
-  if (error instanceof HttpError) {
+  if (error instanceof HttpError)
+  {
     console.log("status", error.statusCode, error.message);
     statusCode = error.statusCode;
     type = error.type;
   }
 
-  if (error instanceof Error) {
+  if (error instanceof Error)
+  {
     console.error(`ERROR: ${error.name} ${error.message}`);
     message = error.message;
-  } else {
-    console.error("ERROR: An unknown error occurred");
+  }
+  else
+  {
+    console.error("ERROR: An unknown error occurred:", String(error));
     message = `An unknown error occurred, ${String(error)}`;
   }
 
@@ -42,7 +52,7 @@ export function globalErrorHandler(error: unknown, set: any) {
 
   set.status = statusCode;
 
-  console.log(process.env.BUN_DEV);
+  // console.log(process.env.BUN_DEV);
 
   return {
     message,

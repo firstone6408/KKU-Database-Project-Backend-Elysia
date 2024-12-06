@@ -2,7 +2,8 @@ import { SignJWT, jwtVerify } from "jose";
 
 const SECRET_KEY = new TextEncoder().encode(process.env.SECERT_KEY);
 
-export const generateToken = async (payload: any) => {
+export const generateToken = async (payload: any) =>
+{
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -12,22 +13,28 @@ export const generateToken = async (payload: any) => {
   return token;
 };
 
-export const verifyToken = async (token: string) => {
-  try {
+export const verifyToken = async (token: string) =>
+{
+  try
+  {
     const { payload } = await jwtVerify(token, SECRET_KEY);
     return payload;
-  } catch (error) {
+  }
+  catch (error)
+  {
     return undefined;
   }
 };
 
-export const hashPassword = async (password: string) => {
+export const hashPassword = async (password: string) =>
+{
   return await Bun.password.hash(password);
 };
 
 export const comparePassword = async (
   password: string,
   hasdPassword: string
-) => {
+) =>
+{
   return await Bun.password.verify(password, hasdPassword);
 };

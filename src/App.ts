@@ -3,23 +3,27 @@ import staticPlugin from "@elysiajs/static";
 import swagger from "@elysiajs/swagger";
 import Elysia from "elysia";
 import { kkuDB as db } from "./database/prisma/kku.prisma";
-import {
+import
+{
   globalErrorHandler,
   HttpError,
 } from "./middlewares/error.middleware";
 import { userRouters } from "./routes/user.routes";
 import { authRouters } from "./routes/auth.routes";
 
-export class ElysiaServer {
+export class ElysiaServer
+{
   private readonly app: Elysia;
 
-  constructor() {
+  constructor()
+  {
     this.app = new Elysia();
 
     this.init();
   }
 
-  private async init() {
+  private async init()
+  {
     await this.connectDatabase();
 
     this.initConfig();
@@ -28,14 +32,17 @@ export class ElysiaServer {
     this.initRouters();
   }
 
-  private async connectDatabase() {
-    try {
+  private async connectDatabase()
+  {
+    try
+    {
       await db.testConnection();
 
       console.log(
         `[Server: ${this.app.server?.hostname}] Database connected successfully`
       );
-    } catch (error) {
+    } catch (error)
+    {
       console.error(
         `[Server: ${this.app.server?.hostname
         }] Database connection failed: ${String(error)}`
@@ -46,18 +53,22 @@ export class ElysiaServer {
 
   private initConfig() { }
 
-  private initMiddlewares() {
+  private initMiddlewares()
+  {
     this.app
       .use(cors())
       .use(staticPlugin())
-      .onAfterResponse(({ set, headers }) => {
+      .onAfterResponse(({ set, headers }) =>
+      {
         console.log(
           ` - Request: [${set.headers["access-control-allow-methods"]}] "${headers["referer"]}" | ${set.status} | Platform: ${headers["sec-ch-ua-platform"]}`
         );
       })
       .error({ HttpError, Error })
-      .onError(({ code, error, set }) => {
-        switch (code) {
+      .onError(({ code, error, set }) =>
+      {
+        switch (code)
+        {
           case "HttpError":
             return globalErrorHandler(error, set);
           case "Error":
@@ -68,38 +79,48 @@ export class ElysiaServer {
       })
   }
 
-  private initSwagger() {
+  private initSwagger()
+  {
     this.app.use(
-      swagger({
-        documentation: {
-          tags: [
-            { name: "Tests", description: "Test related endpoints" },
-            { name: "Users", description: "User related endpoints" },
+      swagger(
+        {
+          documentation:
+          {
+            info:
             {
-              name: "Authen",
-              description: "Authenication related endpoints",
+              title: "Database backend document",
+              version: "1.0.0"
             },
-          ],
-        },
-      })
+            tags:
+              [
+                { name: "Tests", description: "Test related endpoints" },
+                { name: "Users", description: "User related endpoints" },
+                {
+                  name: "Authen",
+                  description: "Authenication related endpoints",
+                },
+              ],
+          },
+        })
     );
   }
 
-  private initRouters() {
+  private initRouters()
+  {
     this.app.use(userRouters).use(authRouters)
   }
 
-  public start(port: number) {
+  public start(port: number)
+  {
     this.app.listen(port);
     console.log(
       `🦊 Elysia is running at ${this.app.server?.hostname}:${this.app.server?.port}`
     );
 
-    process.on("SIGINT", async () => {
+    process.on("SIGINT", async () =>
+    {
       await db.disconnect();
-      console.log(
-        `[Server: ${this.app.server?.hostname}] Database disconnected`
-      );
+      console.log(`[Server: ${this.app.server?.hostname}] Database disconnected`);
       process.exit(0);
     });
   }
