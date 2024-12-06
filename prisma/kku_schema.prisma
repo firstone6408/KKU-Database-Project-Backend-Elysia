@@ -32,7 +32,7 @@ model User {
 
 model Branch {
     id   Int    @id @default(autoincrement())
-    name String
+    name String @unique
 
     users    User[]
     products Product[] // สินค้าที่มีในสาขานี้

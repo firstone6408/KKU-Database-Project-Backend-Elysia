@@ -10,6 +10,8 @@ import
 } from "./middlewares/error.middleware";
 import { userRouters } from "./routes/user.routes";
 import { authRouters } from "./routes/auth.routes";
+import { branchRouters } from "./routes/branch.routes";
+import { cateroryRouters } from "./routes/category.routes";
 
 export class ElysiaServer
 {
@@ -93,12 +95,11 @@ export class ElysiaServer
             },
             tags:
               [
-                { name: "Tests", description: "Test related endpoints" },
+                { name: "Tests", description: "ทดสอบ" },
                 { name: "Users", description: "User related endpoints" },
-                {
-                  name: "Authen",
-                  description: "Authenication related endpoints",
-                },
+                { name: "Authen", description: "Authenication related endpoints", },
+                { name: "Branchs", description: "Branch related endpoints" },
+                { name: "Categories", description: "Category related endpoints" },
               ],
           },
         })
@@ -107,7 +108,11 @@ export class ElysiaServer
 
   private initRouters()
   {
-    this.app.use(userRouters).use(authRouters)
+    this.app
+      .use(userRouters)
+      .use(authRouters)
+      .use(branchRouters)
+      .use(cateroryRouters)
   }
 
   public start(port: number)

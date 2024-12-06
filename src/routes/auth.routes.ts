@@ -11,14 +11,15 @@ export const authRouters = baseRouter.group("/auth", { tags: ["Authen"] }, (app)
             const token = await AuthService.login(body, jwt);
             return { payload: { data: { token } } }
         })
-    }, {
-        body: t.Object(
-            {
-                username: t.String(),
-                password: t.String()
-            }
-        )
-    })
+    },
+        {
+            body: t.Object(
+                {
+                    username: t.String(),
+                    password: t.String()
+                }
+            )
+        })
 
     .guard({ isVerifyAuth: true }, app => app
         .get("/current-user", ({ withRequestHandling, set, store: { user } }) =>
