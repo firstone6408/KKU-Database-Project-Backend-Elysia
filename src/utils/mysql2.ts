@@ -1,5 +1,5 @@
 import mysql2 from "mysql2/promise";
-import { database } from "../database/connect.db";
+import { database } from "../database/mysql2/connect.db";
 import { z } from "zod";
 
 interface IQueryResponse<T = unknown> {

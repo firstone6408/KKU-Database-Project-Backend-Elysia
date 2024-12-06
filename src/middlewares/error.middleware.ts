@@ -68,6 +68,8 @@ export function globalErrorHandler(error: unknown, set: any) {
 
   set.status = statusCode;
 
+  console.log(process.env.BUN_DEV);
+
   return {
     message,
     type,

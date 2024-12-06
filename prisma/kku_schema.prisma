@@ -1,0 +1,149 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "./generated/kku_client"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("KKU_DATABASE_URL")
+}
+
+model User {
+    id          Int       @id @default(autoincrement())
+    username    String    @unique
+    password    String
+    email       String    @unique
+    fullName    String
+    image       String?
+    phoneNumber String?
+    role        Role
+    status      Status    @default(ACTIVE)
+    lastLogin   DateTime?
+
+    branchId Int?
+    branch   Branch? @relation(fields: [branchId], references: [id])
+
+    order        Order[]
+    stockHistory StockHistory[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Branch {
+    id   Int    @id @default(autoincrement())
+    name String
+
+    users    User[]
+    products Product[] // สินค้าที่มีในสาขานี้
+    order    Order[]
+
+    createdAt DateTime @default(now()) // วันที่เพิ่มสินค้า
+    updatedAt DateTime @updatedAt // วันที่อัปเดตสินค้า
+}
+
+model Category {
+    id   Int    @id @default(autoincrement())
+    name String @unique // ชื่อหมวดหมู่
+
+    products Product[] // สินค้าในหมวดหมู่นี้
+
+    createdAt DateTime @default(now()) // วันที่เพิ่มสินค้า
+    updatedAt DateTime @updatedAt // วันที่อัปเดตสินค้า
+}
+
+model Product {
+    id          Int     @id @default(autoincrement())
+    sku         String  @unique
+    name        String // ชื่อสินค้า
+    description String? // รายละเอียดสินค้า
+    price       Float // ราคาสินค้า
+
+    isDeleted Boolean   @default(false) // ใช้บอกว่าสินค้านี้ถูกลบหรือไม่
+    deletedAt DateTime? // เวลาที่ถูกลบ (NULL หมายถึงยังไม่ได้ลบ)
+
+    categoryId Int? // รหัสหมวดหมู่
+    category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+    branch     Branch?   @relation(fields: [branchId], references: [id])
+    branchId   Int?
+
+    stock Stock[]
+
+    createdAt DateTime @default(now()) // วันที่เพิ่มสินค้า
+    updatedAt DateTime @updatedAt // วันที่อัปเดตสินค้า
+}
+
+model Stock {
+    id       Int @id @default(autoincrement())
+    quantity Int // จำนวนสินค้าคงเหลือในคลัง
+
+    productId Int
+    product   Product @relation(fields: [productId], references: [id])
+
+    stockHistories StockHistory[] // ความสัมพันธ์กับ StockHistory
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model StockHistory {
+    id       Int       @id @default(autoincrement())
+    quantity Int // จำนวนที่เพิ่มหรือลด
+    note     String? // หมายเหตุเพิ่มเติม (ถ้ามี)
+    type     StockType // ประเภทของการเปลี่ยนแปลง เช่น ADD, REMOVE
+
+    stockId Int // อ้างอิง Stock
+    stock   Stock @relation(fields: [stockId], references: [id])
+    userId  Int
+    user    User  @relation(fields: [userId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Order {
+    id         Int   @id @default(autoincrement())
+    totalPrice Float // ราคารวมของรายการ
+
+    userId   Int // ผู้ทำรายการ
+    user     User   @relation(fields: [userId], references: [id])
+    branchId Int // สาขาที่ทำรายการ
+    branch   Branch @relation(fields: [branchId], references: [id])
+
+    orderItems OrderItem[] // รายการสินค้าที่ซื้อ
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+    id       Int   @id @default(autoincrement())
+    quantity Int // จำนวนที่ซื้อ
+    price    Float // ราคาสินค้าต่อชิ้นตอนซื้อ
+
+    orderId Int // รหัสคำสั่งซื้อ
+    order   Order @relation(fields: [orderId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum StockType {
+    ADD // การเพิ่มสินค้า (เช่น รับเข้า)
+    REMOVE // การลดสินค้า (เช่น ขายออก)
+    TRANSFER // การโยกย้ายสินค้าไปยังคลังอื่น
+    ADJUST // การปรับปรุงจำนวนสินค้า
+}
+
+enum Role {
+    ADMIN
+    CASHIER
+    MANAGER
+    STAFF
+}
+
+enum Status {
+    ACTIVE
+    INACTIVE
+    SUSPENDED
+}

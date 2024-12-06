@@ -2,9 +2,9 @@ import cors from "@elysiajs/cors";
 import staticPlugin from "@elysiajs/static";
 import swagger from "@elysiajs/swagger";
 import Elysia from "elysia";
-import { database as db } from "./database/connect.db";
+import { kkuDB as db } from "./database/prisma/kku.prisma";
 import { verifyAuth } from "./middlewares/auth.middleware";
-import { userController } from "./controllers/users.controller";
+import { userController } from "./controllers/user.controller";
 import {
   globalErrorHandler,
   HttpError,
@@ -32,12 +32,6 @@ export class ElysiaServer {
     try {
       await db.testConnection();
 
-      // create table
-      await db.createTableIfNotExist();
-
-      // migrations
-      await db.migrations();
-
       console.log(
         `[Server: ${this.app.server?.hostname}] Database connected successfully`
       );
@@ -57,9 +51,9 @@ export class ElysiaServer {
     this.app
       .use(cors())
       .use(staticPlugin())
-      .onAfterResponse(({ set, path }) => {
+      .onAfterResponse(({ set, path, headers }) => {
         console.log(
-          ` - Status: [${set.headers["access-control-allow-methods"]}] "${path}" | ${set.status}`
+          ` - Request: [${set.headers["access-control-allow-methods"]}] "${headers["referer"]}" | ${set.status} | Platform: ${headers["sec-ch-ua-platform"]}`
         );
       })
       .error({ HttpError, Error })
@@ -69,7 +63,15 @@ export class ElysiaServer {
             return globalErrorHandler(error, set);
           case "Error":
             return globalErrorHandler(error, set);
+          default:
+            return globalErrorHandler(error.name, set);
         }
+      })
+      .state({
+        user: {},
+      })
+      .post("/", async ({ store }) => {
+        store.user;
       });
   }
 
@@ -80,6 +82,10 @@ export class ElysiaServer {
           tags: [
             { name: "Tests", description: "Test related endpoints" },
             { name: "Users", description: "User related endpoints" },
+            {
+              name: "Authen",
+              description: "Authenication related endpoints",
+            },
           ],
         },
       })
@@ -103,6 +109,11 @@ export class ElysiaServer {
               .get("", () => {
                 return { message: "Hello Test 123" };
               })
+        )
+        .group("/auth", { tags: ["Authen"] }, (app) =>
+          app.post("/login", () => {
+            return "Authenication";
+          })
         )
         //
         // Users

@@ -20,3 +20,14 @@ export const verifyToken = async (token: string) => {
     return undefined;
   }
 };
+
+export const hashPassword = async (password: string) => {
+  return await Bun.password.hash(password);
+};
+
+export const verifyPassword = async (
+  password: string,
+  hasdPassword: string
+) => {
+  return await Bun.password.verify(password, hasdPassword);
+};

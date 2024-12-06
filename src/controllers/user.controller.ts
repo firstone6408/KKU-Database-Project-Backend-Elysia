@@ -1,7 +1,8 @@
 import { Context } from "elysia";
-import { userRepository } from "../repositories/users.repository";
-import { apiHandler } from "../utils/api.utils";
+import { apiRequestHandler } from "../utils/api.utils";
 import { z } from "zod";
+import { UserService } from "../services/user.service";
+import "../schemas/jwt-payload.schema";
 
 export const userController = {
   /*
@@ -14,46 +15,47 @@ export const userController = {
     }
   */
   async create(context: Context) {
-    // console.log(context.body);
-    return apiHandler
+    return apiRequestHandler
       .body(
         z.object({
           username: z.string(),
-          name: z.string(),
-          email: z.string().email(),
           password: z.string(),
+          email: z.string(),
+          fullName: z.string(),
           image: z.string().optional(),
-          phone: z.string().optional(),
+          phoneNumber: z.string().optional(),
+          role: z.enum(["ADMIN", "CASHIER", "MANAGER", "STAFF"]),
+          branchId: z.number().optional(),
         })
       )
-      .withHandling(context, async ({ body }) => {
-        // console.log("body", body);
-        const result = await userRepository.create(body);
-
+      .validateAndProcessRequest(context, async ({ body }) => {
+        const result = await UserService.create(body);
         return { payload: { data: result } };
       });
   },
 
   async list(context: Context) {
-    return apiHandler.withHandling(context, async () => {
-      const result = await userRepository.findAll();
-      // console.log(result);
+    return apiRequestHandler.validateAndProcessRequest(
+      context,
+      async () => {
+        // console.log(result);
 
-      return { payload: { data: result.queryResult } };
-    });
+        return { payload: { data: {} } };
+      }
+    );
   },
 
   async getById(context: Context) {
-    return apiHandler
+    return apiRequestHandler
       .params(
         z.object({
           id: z.string(),
         })
       )
-      .withHandling(context, async ({ params }) => {
+      .validateAndProcessRequest(context, async ({ params }) => {
         const id = Number(params.id);
-        const result = await userRepository.findById({ id });
-        return { payload: { data: result.queryResult } };
+
+        return { payload: { data: {} } };
       });
   },
 
@@ -67,7 +69,7 @@ export const userController = {
     }
   */
   async update(context: Context) {
-    return apiHandler
+    return apiRequestHandler
       .params(
         z.object({
           id: z.string(),
@@ -83,25 +85,23 @@ export const userController = {
           phone: z.string().optional(),
         })
       )
-      .withHandling(context, async ({ params, body }) => {
+      .validateAndProcessRequest(context, async ({ params, body }) => {
         const id = Number(params.id);
-        const result = await userRepository.update({ id, ...body });
-        return { payload: { data: result.queryResult } };
+        return { payload: { data: {} } };
       });
   },
 
   async remove(context: Context) {
     //console.log(context.params);
-    return apiHandler
+    return apiRequestHandler
       .params(
         z.object({
           id: z.string(),
         })
       )
-      .withHandling(context, async ({ params }) => {
+      .validateAndProcessRequest(context, async ({ params }) => {
         const id = Number(params.id);
-        const result = await userRepository.delete({ id });
-        return { payload: { data: result.queryResult } };
+        return { payload: { data: {} } };
       });
   },
 
