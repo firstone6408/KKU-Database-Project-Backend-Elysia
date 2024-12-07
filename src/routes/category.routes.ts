@@ -12,7 +12,7 @@ export const cateroryRouters = baseRouter.group("/categories", { tags: ["Categor
             {
                 const created = await CategoryService.create(body);
                 return { payload: { data: created }, message: "สร้างประเภทสินค้าสำเร็จ" }
-            },)
+            });
         },
             {
                 body: t.Object({ name: t.String() })
@@ -27,8 +27,22 @@ export const cateroryRouters = baseRouter.group("/categories", { tags: ["Categor
             {
                 const categories = await CategoryService.list();
                 return { payload: { data: categories } }
-            })
+            });
         })
+
+
+        // TODO endpoint GET "/categories/:id"
+        .get("/:id", ({ withRequestHandling, set, params: { id } }) => 
+        {
+            return withRequestHandling({ set }, async () => 
+            {
+                const category = await CategoryService.getById(id);
+                return { payload: { data: category } }
+            })
+        },
+            {
+                params: t.Object({ id: t.Number() })
+            })
 
 
         // TODO endpoint PUT "/categories/:id"
@@ -38,7 +52,7 @@ export const cateroryRouters = baseRouter.group("/categories", { tags: ["Categor
             {
                 const updated = await CategoryService.update(id, body);
                 return { payload: { data: updated }, message: "อัปเดตประเภทสินค้าสำเร็จ" }
-            })
+            });
         },
             {
                 params: t.Object({ id: t.Number() }),
@@ -54,7 +68,7 @@ export const cateroryRouters = baseRouter.group("/categories", { tags: ["Categor
             {
                 const deleted = await CategoryService.remove(id);
                 return { payload: { data: deleted }, message: "ลบประเภทสินค้าสำเร็จ" }
-            })
+            });
         },
             {
                 params: t.Object({ id: t.Number() })

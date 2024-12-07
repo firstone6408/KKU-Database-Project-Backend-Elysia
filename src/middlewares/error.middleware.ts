@@ -1,4 +1,5 @@
-import { StatusMap } from "elysia";
+import { StatusMap, ValidationError } from "elysia";
+import { Set } from "../schemas/lib.schema";
 
 export class HttpError extends Error
 {
@@ -24,7 +25,7 @@ export class HttpError extends Error
   }
 }
 
-export function globalErrorHandler(error: unknown, set: any)
+export function globalErrorHandler(error: unknown, set: Set)
 {
   let statusCode: number | keyof StatusMap = 500;
   let message = "";
@@ -32,12 +33,24 @@ export function globalErrorHandler(error: unknown, set: any)
 
   if (error instanceof HttpError)
   {
-    console.log("status", error.statusCode, error.message);
+    console.error("status", error.statusCode, error.message);
     statusCode = error.statusCode;
     type = error.type;
+    message = error.message;
   }
-
-  if (error instanceof Error)
+  else if (error instanceof ValidationError)
+  {
+    const errorMessages = error.all.map((item) =>
+    {
+      return item.summary ? `${item.path.split("/")[1]}: ${item.message}` : item.summary
+    }).join(", ")
+    // console.log(errorMessages)
+    console.error("status", error.status, errorMessages);
+    message = errorMessages;
+    statusCode = error.status;
+    type = "fail";
+  }
+  else if (error instanceof Error)
   {
     console.error(`ERROR: ${error.name} ${error.message}`);
     message = error.message;
@@ -49,6 +62,7 @@ export function globalErrorHandler(error: unknown, set: any)
   }
 
   // console.error("error type", type);
+  // console.error('ok')
 
   set.status = statusCode;
 

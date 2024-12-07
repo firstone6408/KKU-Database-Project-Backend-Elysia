@@ -2,10 +2,10 @@ import { kkuDB } from "../database/prisma/kku.prisma";
 import { Jwt } from "../schemas/lib.schema";
 import { HttpError } from "./error.middleware";
 
-export const verifyAuth = async (headers: Headers, user: JwtPayload, jwt: Jwt) =>
+export const verifyAuth = async (token: string, user: JwtPayload, jwt: Jwt) =>
 {
-  const token = headers.get("Authorization");
-  if (!token)
+  // const token = headers.get("Authorization");
+  if (!token || token === "")
   {
     throw new HttpError(
       {
@@ -15,6 +15,9 @@ export const verifyAuth = async (headers: Headers, user: JwtPayload, jwt: Jwt) =
       }
     )
   }
+
+  // console.log("token:", token);
+
   const userInfo = await jwt.verify(token) as JwtPayload;
   if (!userInfo)
   {

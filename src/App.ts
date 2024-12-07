@@ -12,6 +12,10 @@ import { userRouters } from "./routes/user.routes";
 import { authRouters } from "./routes/auth.routes";
 import { branchRouters } from "./routes/branch.routes";
 import { cateroryRouters } from "./routes/category.routes";
+import { productRouters } from "./routes/product.routes";
+import { stockRouters } from "./routes/stock.routes";
+import { stockHistoryRouters } from "./routes/stock-history.routes";
+import { orderRouters } from "./routes/order.routes";
 
 export class ElysiaServer
 {
@@ -69,14 +73,14 @@ export class ElysiaServer
       .error({ HttpError, Error })
       .onError(({ code, error, set }) =>
       {
+        // console.log(error instanceof HttpError)
+        // console.log(error)
         switch (code)
         {
           case "HttpError":
             return globalErrorHandler(error, set);
-          case "Error":
-            return globalErrorHandler(error, set);
           default:
-            return globalErrorHandler(error.name, set);
+            return globalErrorHandler(error, set);
         }
       })
   }
@@ -95,11 +99,14 @@ export class ElysiaServer
             },
             tags:
               [
-                { name: "Tests", description: "ทดสอบ" },
                 { name: "Users", description: "User related endpoints" },
                 { name: "Authen", description: "Authenication related endpoints", },
                 { name: "Branchs", description: "Branch related endpoints" },
                 { name: "Categories", description: "Category related endpoints" },
+                { name: "Products", description: "Product related endpoints" },
+                { name: "Stocks", description: "Stock related endpoints" },
+                { name: "Stock Histories", description: "Stock history related endpoints" },
+                { name: "Orders", description: "Order related endpoints" },
               ],
           },
         })
@@ -108,11 +115,16 @@ export class ElysiaServer
 
   private initRouters()
   {
-    this.app
+    this.app.group("/api", (app) => app
       .use(userRouters)
       .use(authRouters)
       .use(branchRouters)
       .use(cateroryRouters)
+      .use(productRouters)
+      .use(stockRouters)
+      .use(stockHistoryRouters)
+      .use(orderRouters)
+    )
   }
 
   public start(port: number)

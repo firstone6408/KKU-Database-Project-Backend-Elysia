@@ -8,11 +8,7 @@ const db = kkuDB.kkuPrismaClient;
 export abstract class AuthService
 {
     public static async login(
-        options:
-            {
-                username: string,
-                password: string
-            },
+        options: { username: string, password: string },
         jwt: Jwt
     )
     {
@@ -37,8 +33,8 @@ export abstract class AuthService
         }
 
         // compare password
-        const isCorrect = await comparePassword(options.password, existingUser.password);
-        if (!isCorrect)
+        const isMactch = await comparePassword(options.password, existingUser.password);
+        if (!isMactch)
         {
             throw new HttpError(
                 {
@@ -48,6 +44,12 @@ export abstract class AuthService
                 }
             )
         }
+
+        // upadate last login
+        await db.user.update({
+            where: { id: existingUser.id },
+            data: { lastLogin: new Date() }
+        });
 
         const userPayload =
         {

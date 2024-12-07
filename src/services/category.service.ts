@@ -42,6 +42,18 @@ export abstract class CategoryService
         return await db.category.findMany();
     }
 
+    public static async getById(id: number)
+    {
+        return await db.category.findUnique(
+            {
+                where:
+                {
+                    id: id
+                }
+            }
+        )
+    }
+
     public static async update(id: number, options: { name: string })
     {
         const existingCategory = await db.category.findUnique(

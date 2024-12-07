@@ -13,6 +13,12 @@ export const baseRouter = new Elysia()
     ))
     .state({ user: {} as JwtPayload })
     .decorate("withRequestHandling", withRequestHandling)
+    .derive(() =>
+    {
+        return {
+            helloTest: () => { }
+        }
+    })
     //
     // Middlewares Authen
     //
@@ -21,8 +27,8 @@ export const baseRouter = new Elysia()
             isVerifyAuth(enabled: boolean)
             {
                 if (!enabled) return
-                onBeforeHandle(async ({ request: { headers }, store: { user }, jwt }) =>
-                    verifyAuth(headers, user, jwt))
+                onBeforeHandle(async ({ cookie: { token }, store: { user }, jwt }) =>
+                    verifyAuth(token.value || "", user, jwt))
             }
         }
     ))

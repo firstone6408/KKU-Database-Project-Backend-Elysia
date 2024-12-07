@@ -58,6 +58,7 @@ model Product {
     name        String // ชื่อสินค้า
     description String? // รายละเอียดสินค้า
     price       Float // ราคาสินค้า
+    image       String?
 
     isDeleted Boolean   @default(false) // ใช้บอกว่าสินค้านี้ถูกลบหรือไม่
     deletedAt DateTime? // เวลาที่ถูกลบ (NULL หมายถึงยังไม่ได้ลบ)
@@ -102,8 +103,11 @@ model StockHistory {
 }
 
 model Order {
-    id         Int   @id @default(autoincrement())
-    totalPrice Float // ราคารวมของรายการ
+    id            Int           @id @default(autoincrement())
+    totalPrice    Float // ราคารวมของรายการ
+    paymentStatus PaymentStatus @default(PENDING)
+    paymentMethod PaymentMethod // วิธีการชำระเงิน (เงินสด, บัตรเครดิต, โอนเงิน)
+    orderStatus   OrderStatus   @default(PENDING)
 
     userId   Int // ผู้ทำรายการ
     user     User   @relation(fields: [userId], references: [id])
@@ -146,4 +150,26 @@ enum Status {
     ACTIVE
     INACTIVE
     SUSPENDED
+}
+
+enum PaymentStatus {
+    PENDING // รอการชำระเงิน
+    PAID // ชำระเงินเรียบร้อยแล้ว
+    FAILED // การชำระเงินล้มเหลว
+}
+
+enum OrderStatus {
+    PENDING // รอการดำเนินการ
+    PROCESSING // กำลังดำเนินการ (อาจจะเป็นการจัดส่งหรือเตรียมสินค้า)
+    COMPLETED // เสร็จสิ้น
+    CANCELED // ยกเลิก
+}
+
+enum PaymentMethod {
+    CASH // ชำระด้วยเงินสด
+    CREDIT_CARD // ชำระด้วยบัตรเครดิต
+    DEBIT_CARD // ชำระด้วยบัตรเดบิต
+    BANK_TRANSFER // โอนเงินผ่านธนาคาร
+    E_WALLET // ชำระผ่านกระเป๋าเงินอิเล็กทรอนิกส์ (เช่น PayPal, AirPay, TrueMoney, Alipay)
+    OTHER // วิธีการชำระเงินอื่นๆ
 }

@@ -1,6 +1,7 @@
 import { t } from "elysia";
 import { baseRouter } from "./base.routes";
 import { UserService } from "../services/user.service";
+import { z } from "zod";
 
 export const userRouters = baseRouter.group("/users", { tags: ["Users"] }, (app) => app
 
@@ -36,7 +37,24 @@ export const userRouters = baseRouter.group("/users", { tags: ["Users"] }, (app)
 
         .get("/", ({ withRequestHandling, set }) =>
         {
-            return withRequestHandling({ set }, async () =>
+            return withRequestHandling({
+                set,
+                responseFilterSchema: z.object(
+                    {
+                        data: z.array(z.object(
+                            {
+                                username: z.string(),
+                                email: z.string(),
+                                fullName: z.string(),
+                                role: z.string(),
+                                image: z.string().nullable(),
+                                phoneNumber: z.string().nullable(),
+                                branchId: z.number().nullable()
+                            }
+                        ))
+                    }
+                )
+            }, async () =>
             {
                 const result = await UserService.list();
                 return { payload: { data: result } }
