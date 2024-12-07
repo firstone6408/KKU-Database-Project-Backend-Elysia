@@ -4,7 +4,7 @@ import { baseRouter } from "./base.routes";
 import { StockTypeT } from "../common/enums/stock-type.enum";
 import { HttpError } from "../middlewares/error.middleware";
 
-export const stockRouters = baseRouter.group("/stock", { tags: ["Stock"] }, (app) => app
+export const stockRouters = baseRouter.group("/stock", { tags: ["Stocks"] }, (app) => app
 
     .guard({ isVerifyAuth: true }, (app) => app
 

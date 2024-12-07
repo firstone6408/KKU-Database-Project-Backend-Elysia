@@ -70,7 +70,8 @@ export abstract class ProductSerivce
                     note: note && note.trim() !== "" ? note : "เพิ่มสินค้าเข้าระบบ",
                     type: "ADD",
                     stockId: stock.id,
-                    userId: userId
+                    userId: userId,
+                    productId: product.id
                 }
             }
         )

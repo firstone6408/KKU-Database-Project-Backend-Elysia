@@ -62,7 +62,11 @@ export class ElysiaServer
   private initMiddlewares()
   {
     this.app
-      .use(cors())
+      .use(cors(
+        {
+          origin: ["http://localhost:3001"],
+        }
+      ))
       .use(staticPlugin())
       .onAfterResponse(({ set, headers }) =>
       {
@@ -99,14 +103,14 @@ export class ElysiaServer
             },
             tags:
               [
-                { name: "Users", description: "User related endpoints" },
-                { name: "Authen", description: "Authenication related endpoints", },
-                { name: "Branchs", description: "Branch related endpoints" },
-                { name: "Categories", description: "Category related endpoints" },
-                { name: "Products", description: "Product related endpoints" },
-                { name: "Stocks", description: "Stock related endpoints" },
-                { name: "Stock Histories", description: "Stock history related endpoints" },
-                { name: "Orders", description: "Order related endpoints" },
+                { name: "Users", description: "จุดเชื่อมต่อเกี่ยวกับการจัดการผู้ใช้ เช่น การสมัครสมาชิก, การอัปเดตข้อมูลผู้ใช้" },
+                { name: "Authen", description: "จุดเชื่อมต่อที่เกี่ยวข้องกับการยืนยันตัวตน เช่น การล็อกอิน, การลงทะเบียน, การรีเซ็ตรหัสผ่าน" },
+                { name: "Branchs", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการสาขา เช่น การเพิ่ม, แก้ไข หรือ ลบสาขา" },
+                { name: "Categories", description: "จุดเชื่อมต่อที่เกี่ยวข้องกับการจัดการหมวดหมู่สินค้า เช่น การเพิ่ม, แก้ไข หรือ ลบหมวดหมู่" },
+                { name: "Products", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการสินค้า เช่น การเพิ่ม, แก้ไข, หรือ ลบสินค้า" },
+                { name: "Stocks", description: "จุดเชื่อมต่อที่เกี่ยวข้องกับการจัดการสินค้าคงคลัง เช่น การเพิ่ม, ลด หรือ ปรับปรุงจำนวนสินค้าในคลัง" },
+                { name: "Stock Histories", description: "จุดเชื่อมต่อที่เกี่ยวกับประวัติการเปลี่ยนแปลงสินค้าคงคลัง เช่น การเพิ่มหรือการลดสินค้า" },
+                { name: "Orders", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการคำสั่งซื้อ เช่น การสร้าง, อัปเดต หรือ ยกเลิกคำสั่งซื้อ" }
               ],
           },
         })
@@ -116,6 +120,10 @@ export class ElysiaServer
   private initRouters()
   {
     this.app.group("/api", (app) => app
+      .get("/", () =>
+      {
+        return { message: "Hello Nextjs from Elysia!" }
+      })
       .use(userRouters)
       .use(authRouters)
       .use(branchRouters)

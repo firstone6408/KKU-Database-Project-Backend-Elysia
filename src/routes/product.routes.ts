@@ -27,7 +27,7 @@ export const productRouters = baseRouter.group("/products", { tags: ["Products"]
                         image: t.Optional(t.String()),
                         categoryId: t.Optional(t.Number()),
                         branchId: t.Optional(t.Number()),
-                        quantity: t.Optional(t.Number({ minimum: 1 })),
+                        quantity: t.Optional(t.Number()),
                         note: t.Optional(t.String())
                     }
                 )

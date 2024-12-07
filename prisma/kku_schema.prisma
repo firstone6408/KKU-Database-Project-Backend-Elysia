@@ -68,7 +68,9 @@ model Product {
     branch     Branch?   @relation(fields: [branchId], references: [id])
     branchId   Int?
 
-    stock Stock[]
+    stock        Stock[]
+    orderItem    OrderItem[]
+    stockHistory StockHistory[]
 
     createdAt DateTime @default(now()) // วันที่เพิ่มสินค้า
     updatedAt DateTime @updatedAt // วันที่อัปเดตสินค้า
@@ -78,7 +80,7 @@ model Stock {
     id       Int @id @default(autoincrement())
     quantity Int // จำนวนสินค้าคงเหลือในคลัง
 
-    productId Int
+    productId Int     @unique
     product   Product @relation(fields: [productId], references: [id])
 
     stockHistories StockHistory[] // ความสัมพันธ์กับ StockHistory
@@ -93,28 +95,33 @@ model StockHistory {
     note     String? // หมายเหตุเพิ่มเติม (ถ้ามี)
     type     StockType // ประเภทของการเปลี่ยนแปลง เช่น ADD, REMOVE
 
-    stockId Int // อ้างอิง Stock
-    stock   Stock @relation(fields: [stockId], references: [id])
-    userId  Int
-    user    User  @relation(fields: [userId], references: [id])
+    stockId   Int // อ้างอิง Stock
+    stock     Stock   @relation(fields: [stockId], references: [id])
+    userId    Int
+    user      User    @relation(fields: [userId], references: [id])
+    productId Int
+    Product   Product @relation(fields: [productId], references: [id])
+    orderId   Int?
+    Order     Order?  @relation(fields: [orderId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model Order {
-    id            Int           @id @default(autoincrement())
-    totalPrice    Float // ราคารวมของรายการ
-    paymentStatus PaymentStatus @default(PENDING)
-    paymentMethod PaymentMethod // วิธีการชำระเงิน (เงินสด, บัตรเครดิต, โอนเงิน)
-    orderStatus   OrderStatus   @default(PENDING)
+    id            Int            @id @default(autoincrement())
+    totalPrice    Float? // ราคารวมของรายการ
+    paymentStatus PaymentStatus  @default(PENDING)
+    paymentMethod PaymentMethod? // วิธีการชำระเงิน (เงินสด, บัตรเครดิต, โอนเงิน)
+    orderStatus   OrderStatus    @default(PENDING)
 
     userId   Int // ผู้ทำรายการ
     user     User   @relation(fields: [userId], references: [id])
     branchId Int // สาขาที่ทำรายการ
     branch   Branch @relation(fields: [branchId], references: [id])
 
-    orderItems OrderItem[] // รายการสินค้าที่ซื้อ
+    orderItems   OrderItem[] // รายการสินค้าที่ซื้อ
+    stockHistory StockHistory[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -125,8 +132,10 @@ model OrderItem {
     quantity Int // จำนวนที่ซื้อ
     price    Float // ราคาสินค้าต่อชิ้นตอนซื้อ
 
-    orderId Int // รหัสคำสั่งซื้อ
-    order   Order @relation(fields: [orderId], references: [id])
+    productId Int
+    Product   Product @relation(fields: [productId], references: [id])
+    orderId   Int // รหัสคำสั่งซื้อ
+    order     Order   @relation(fields: [orderId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -137,6 +146,7 @@ enum StockType {
     REMOVE // การลดสินค้า (เช่น ขายออก)
     TRANSFER // การโยกย้ายสินค้าไปยังคลังอื่น
     ADJUST // การปรับปรุงจำนวนสินค้า
+    CANCELED
 }
 
 enum Role {
@@ -172,4 +182,5 @@ enum PaymentMethod {
     BANK_TRANSFER // โอนเงินผ่านธนาคาร
     E_WALLET // ชำระผ่านกระเป๋าเงินอิเล็กทรอนิกส์ (เช่น PayPal, AirPay, TrueMoney, Alipay)
     OTHER // วิธีการชำระเงินอื่นๆ
+    CANCELED // ยกเลิก
 }

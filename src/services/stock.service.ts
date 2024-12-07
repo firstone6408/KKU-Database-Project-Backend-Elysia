@@ -125,6 +125,7 @@ export abstract class StockService
             {
                 data:
                 {
+                    productId: productId,
                     quantity: options.quantity,
                     type: options.type,
                     stockId: stock.id,
@@ -156,6 +157,14 @@ export abstract class StockService
                                     username: true,
                                     fullName: true,
                                     email: true,
+                                    branch:
+                                    {
+                                        select:
+                                        {
+                                            id: true,
+                                            name: true
+                                        }
+                                    }
                                 }
                             }
                         }
