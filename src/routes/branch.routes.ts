@@ -1,20 +1,18 @@
 import { t } from "elysia";
 import { baseRouter } from "./base.routes";
 import { BranchService } from "../services/branch.service";
+import { withRequestHandling } from "../utils/request.utils";
 
 export const branchRouters = baseRouter.group("/branch", { tags: ["Branchs"] }, (app) => app
 
     .guard({ isVerifyAuth: true }, (app) => app
 
         // TODO endpoint POST "/branch/"
-        .post("/", ({ withRequestHandling, set, body }) => 
+        .post("/", ({ body }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const created = await BranchService.createBranch(body);
-                return { payload: { data: created }, message: "สร้างสาขาสำเร็จ" }
-            })
-        },
+            const created = await BranchService.createBranch(body);
+            return { payload: { data: created }, message: "สร้างสาขาสำเร็จ" }
+        }),
             {
                 body: t.Object({ name: t.String() })
             }
@@ -22,25 +20,19 @@ export const branchRouters = baseRouter.group("/branch", { tags: ["Branchs"] }, 
 
 
         // TODO endpoint GET "/branch/"
-        .get("/", ({ withRequestHandling, set }) =>
+        .get("/", () => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const branches = await BranchService.list();
-                return { payload: { data: branches } }
-            })
-        })
+            const branches = await BranchService.list();
+            return { payload: { data: branches } }
+        }))
 
 
         // TODO endpoint PUT "/branch/:id"
-        .put("/:id", ({ withRequestHandling, set, params: { id }, body }) =>
+        .put("/:id", ({ params: { id }, body }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const updated = await BranchService.update(id, body)
-                return { payload: { data: updated }, message: "เปลี่ยนชื่อสาขาสำเร็จ" }
-            })
-        },
+            const updated = await BranchService.update(id, body)
+            return { payload: { data: updated }, message: "เปลี่ยนชื่อสาขาสำเร็จ" }
+        }),
             {
                 params: t.Object({ id: t.Number() }),
                 body: t.Object({ name: t.String() })

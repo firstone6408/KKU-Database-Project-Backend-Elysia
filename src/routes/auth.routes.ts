@@ -1,23 +1,23 @@
 import { t } from "elysia";
 import { baseRouter } from "./base.routes";
 import { AuthService } from "../services/auth.service";
+import { withRequestHandling } from "../utils/request.utils";
 
 export const authRouters = baseRouter.group("/auth", { tags: ["Authen"] }, (app) => app
 
-    .post("/login", ({ withRequestHandling, set, body, jwt, cookie: { token } }) =>
+    .post("/login", ({ body, jwt, cookie: { token } }) => withRequestHandling(async () =>
     {
-        return withRequestHandling({ set }, async () =>
-        {
-            const _token = await AuthService.login(body, jwt);
-            token.set({
+        const _token = await AuthService.login(body, jwt);
+        token.set(
+            {
                 value: _token,
                 httpOnly: true,
                 secure: true,
                 maxAge: 60 * 60 * 24 * 7, // 7d
-            })
-            return { payload: { data: { _token } } }
-        })
-    },
+            }
+        )
+        return { payload: { data: { _token } } }
+    }),
         {
             body: t.Object(
                 {
@@ -30,24 +30,18 @@ export const authRouters = baseRouter.group("/auth", { tags: ["Authen"] }, (app)
 
     .guard({ isVerifyAuth: true }, app => app
 
-        .post("/logout", ({ withRequestHandling, set, cookie: { token } }) => 
+        .post("/logout", ({ cookie: { token } }) => withRequestHandling(async () => 
         {
-            return withRequestHandling({ set }, async () => 
-            {
-                token.remove();
-                return { payload: { data: {} }, message: "ออกจากระบบสำเร็จ" }
-            })
-        })
+            token.remove();
+            return { payload: { data: {} }, message: "ออกจากระบบสำเร็จ" }
+        }))
 
 
 
-        .get("/current-user", ({ withRequestHandling, set, store: { user } }) =>
+        .get("/current-user", ({ store: { user } }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const result = await AuthService.currentUser(user);
-                return { payload: { data: result } }
-            })
-        })
+            const result = await AuthService.currentUser(user);
+            return { payload: { data: result } }
+        }))
     )
 );

@@ -245,83 +245,92 @@ export abstract class OrderService
         }
 
         // ถ้ายังไม่จ่ายตังแต่ยกเลิกก็ให้ข้ามการ recover
-        if (existingOrder.orderStatus === "COMPLETED")
+        switch (existingOrder.orderStatus)
         {
-
-
-            // recover stock
-            const recoverStock = await db.stockHistory.findMany(
-                {
-                    where: { orderId: options.id },
-                    select:
+            case "COMPLETED":
+                // recover stock
+                const recoverStock = await db.stockHistory.findMany(
                     {
-                        stockId: true,
-                        quantity: true,
-                        productId: true
-                    }
-                }
-            );
-
-            if (recoverStock.length <= 0)
-            {
-                throw new HttpError(
-                    {
-                        statusCode: 400,
-                        message: "ไม่พบรายการสินค้าในประวัติ",
-                        type: "fail"
+                        where: { orderId: options.id },
+                        select:
+                        {
+                            stockId: true,
+                            quantity: true,
+                            productId: true
+                        }
                     }
                 );
-            }
 
-            for (let i = 0; i < recoverStock.length; i += 1)
-            {
-                const item = recoverStock[i];
-
-                // recover stock
-                await db.stock.update(
-                    {
-                        where: { id: item.stockId },
-                        data:
+                if (recoverStock.length <= 0)
+                {
+                    throw new HttpError(
                         {
-                            quantity:
+                            statusCode: 400,
+                            message: "ไม่พบรายการสินค้าในประวัติ",
+                            type: "fail"
+                        }
+                    );
+                }
+
+                for (let i = 0; i < recoverStock.length; i += 1)
+                {
+                    const item = recoverStock[i];
+
+                    // recover stock
+                    await db.stock.update(
+                        {
+                            where: { id: item.stockId },
+                            data:
                             {
-                                increment: item.quantity
+                                quantity:
+                                {
+                                    increment: item.quantity
+                                }
                             }
                         }
-                    }
-                );
+                    );
 
-                // add cancel status
-                await db.stockHistory.create(
+                    // add cancel status
+                    await db.stockHistory.create(
+                        {
+                            data:
+                            {
+                                quantity: item.quantity,
+                                note: "ลูกค้ายกเลิกรายการ",
+                                type: "CANCELED",
+                                stockId: item.stockId,
+                                userId: userId,
+                                productId: item.productId,
+                                orderId: options.id
+                            }
+                        }
+                    );
+                }
+
+                // cancel order
+                await db.order.update(
                     {
+                        where: {
+                            id: existingOrder.id,
+                            userId: existingOrder.userId
+                        },
                         data:
                         {
-                            quantity: item.quantity,
-                            note: "ลูกค้ายกเลิกรายการ",
-                            type: "CANCELED",
-                            stockId: item.stockId,
-                            userId: userId,
-                            productId: item.productId,
-                            orderId: options.id
+                            orderStatus: "CANCELED",
                         }
                     }
                 );
-            }
-        }
+                break;
 
-        // cancel order
-        await db.order.update(
-            {
-                where: {
-                    id: existingOrder.id,
-                    userId: existingOrder.userId
-                },
-                data:
-                {
-                    orderStatus: "CANCELED",
-                }
-            }
-        );
+            default:
+                // ลบ order ถ้ายังไม่สั่งของ
+                await db.order.delete(
+                    {
+                        where: { id: existingOrder.id }
+                    }
+                );
+                break;
+        }
 
     }
 }

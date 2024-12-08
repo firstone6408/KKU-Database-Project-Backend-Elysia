@@ -1,6 +1,6 @@
 import jwt from "@elysiajs/jwt";
 import Elysia, { t } from "elysia";
-import { withRequestHandling } from "../plugins/request.plugin";
+import { withRequestHandling } from "../utils/request.utils";
 import { verifyAuth } from "../middlewares/auth.middleware";
 
 export const baseRouter = new Elysia()
@@ -12,7 +12,7 @@ export const baseRouter = new Elysia()
         }
     ))
     .state({ user: {} as JwtPayload })
-    .decorate("withRequestHandling", withRequestHandling)
+    //  .decorate("withRequestHandling", withRequestHandling)
     .derive(() =>
     {
         return {

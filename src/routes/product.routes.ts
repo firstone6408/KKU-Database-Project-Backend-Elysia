@@ -1,19 +1,18 @@
 import { t } from "elysia";
 import { baseRouter } from "./base.routes";
 import { ProductSerivce } from "../services/product.service";
+import { withRequestHandling } from "../utils/request.utils";
 
 export const productRouters = baseRouter.group("/products", { tags: ["Products"] }, (app) => app
     .guard({ isVerifyAuth: true }, (app) => app
 
         // TODO endpoints POST "/api/products"
-        .post("/", ({ withRequestHandling, set, body, store: { user } }) => 
+        .post("/", ({ body, store: { user }, set }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const created = await ProductSerivce.create(body, user.id);
-                return { payload: { data: created }, message: "เพิ่มสินค้าสำเร็จ", statusCode: 201 }
-            })
-        },
+            const created = await ProductSerivce.create(body, user.id);
+            set.status = 201;
+            return { payload: { data: created }, message: "เพิ่มสินค้าสำเร็จ" }
+        }),
             {
                 detail: {
                     description: "เพิ่มสินค้าเข้าระบบ โดยที่จะเพิ่มลง Stock และ ประวัติ Stock อัติโนมันติ"
@@ -31,40 +30,32 @@ export const productRouters = baseRouter.group("/products", { tags: ["Products"]
                         note: t.Optional(t.String())
                     }
                 )
-            })
+            }
+        )
 
 
         // TODO endpoints GET "/api/products"
-        .get("/", ({ withRequestHandling, set }) => 
+        .get("/", () => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const products = await ProductSerivce.list();
-                return { payload: { data: products } }
-            });
-        })
+            const products = await ProductSerivce.list();
+            return { payload: { data: products } }
+        }))
 
 
         // TODO endpoints GET "/api/products/stocks"
-        .get("/stocks", ({ withRequestHandling, set }) =>
+        .get("/stocks", () => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const productsWithStocks = await ProductSerivce.listWithStock();
-                return { payload: { data: productsWithStocks } }
-            })
-        })
+            const productsWithStocks = await ProductSerivce.listWithStock();
+            return { payload: { data: productsWithStocks } }
+        }))
 
 
         // TODO endpoints GET "/api/products/:id"
-        .get("/:id", ({ withRequestHandling, set, params: { id } }) =>
+        .get("/:id", ({ params: { id } }) => withRequestHandling(async () => 
         {
-            return withRequestHandling({ set }, async () => 
-            {
-                const product = await ProductSerivce.getById(id);
-                return { payload: { data: product } }
-            })
-        },
+            const product = await ProductSerivce.getById(id);
+            return { payload: { data: product } }
+        }),
             {
                 params: t.Object({ id: t.Number() })
             }
@@ -72,14 +63,11 @@ export const productRouters = baseRouter.group("/products", { tags: ["Products"]
 
 
         // TODO endpoints GET "/api/products/sku/:sku"
-        .get("/sku/:sku", ({ withRequestHandling, set, params: { sku } }) =>
+        .get("/sku/:sku", ({ params: { sku } }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const product = await ProductSerivce.getBySku(sku);
-                return { payload: { data: product } }
-            })
-        },
+            const product = await ProductSerivce.getBySku(sku);
+            return { payload: { data: product } }
+        }),
             {
                 params: t.Object({ sku: t.String() })
             }
@@ -87,14 +75,11 @@ export const productRouters = baseRouter.group("/products", { tags: ["Products"]
 
 
         // TODO endpoints DELETE "/api/products/:id/sku/:sku"
-        .delete("/:id/sku/:sku/soft-delete", ({ withRequestHandling, set, params: { id, sku } }) =>
+        .delete("/:id/sku/:sku/soft-delete", ({ params: { id, sku } }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const deleted = await ProductSerivce.softRemove(id, sku);
-                return { payload: { data: deleted }, message: "ลบสินค้าสำเร็จ" }
-            })
-        },
+            const deleted = await ProductSerivce.softRemove(id, sku);
+            return { payload: { data: deleted }, message: "ลบสินค้าสำเร็จ" }
+        }),
             {
                 detail: { description: "เปลี่ยนสถาณะสินค้า(ไม่ได้ลบในระบบ)" },
                 params: t.Object(
@@ -108,15 +93,12 @@ export const productRouters = baseRouter.group("/products", { tags: ["Products"]
 
 
         // TODO endpoints UPDATE "/api/products/:id/sku/:sku"
-        .put("/:id/sku/:sku", ({ withRequestHandling, set, params: { id, sku }, body }) =>
+        .put("/:id/sku/:sku", ({ params: { id, sku }, body }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                console.log(id, sku)
-                const updated = await ProductSerivce.update(id, sku, body);
-                return { payload: { data: updated }, message: "อัปเดตสินค้าสำเร็จ" }
-            })
-        },
+            console.log(id, sku)
+            const updated = await ProductSerivce.update(id, sku, body);
+            return { payload: { data: updated }, message: "อัปเดตสินค้าสำเร็จ" }
+        }),
             {
                 params: t.Object(
                     {

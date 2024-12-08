@@ -2,43 +2,36 @@ import { t } from "elysia";
 import { OrderService } from "../services/order.service";
 import { baseRouter } from "./base.routes";
 import { PaymentMethodT } from "../common/enums/stock-type.enum";
+import { withRequestHandling } from "../utils/request.utils";
 
 export const orderRouters = baseRouter.group("/order", { tags: ["Orders"] }, (app) => app
 
     .guard({ isVerifyAuth: true }, (app) => app
 
         // TODO endpoint POST "/api/order/"
-        .post("/create", ({ withRequestHandling, set, store: { user } }) => 
+        .post("/create", ({ store: { user }, set }) => withRequestHandling(async () => 
         {
-            return withRequestHandling({ set }, async () => 
-            {
-                const created = await OrderService.createOrder(user.id, user.branchId);
-                return { payload: { data: created }, message: "เปิดบิลสำเร็จ", statusCode: 201 }
-            });
-        })
+            const created = await OrderService.createOrder(user.id, user.branchId);
+            set.status = 201;
+            return { payload: { data: created }, message: "เปิดบิลสำเร็จ" }
+        }))
 
 
 
-        .get("/user", ({ withRequestHandling, set, store: { user } }) =>
+        .get("/user", ({ store: { user } }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                const currentOrder = await OrderService.orderByUserId(user.id);
-                console.log(currentOrder)
-                return { payload: { data: currentOrder } }
-            });
-        })
+            const currentOrder = await OrderService.orderByUserId(user.id);
+            console.log(currentOrder)
+            return { payload: { data: currentOrder } }
+        }))
 
 
 
-        .post("/confim", ({ withRequestHandling, set, store: { user }, body }) =>
+        .post("/confim", ({ store: { user }, body }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                await OrderService.orderConfirm(body, user.id);
-                return { payload: { data: null }, message: "ยืนยันสำเร็จ" }
-            });
-        },
+            await OrderService.orderConfirm(body, user.id);
+            return { payload: { data: null }, message: "ยืนยันสำเร็จ" }
+        }),
             {
                 body: t.Object(
                     {
@@ -58,14 +51,11 @@ export const orderRouters = baseRouter.group("/order", { tags: ["Orders"] }, (ap
 
 
 
-        .post("/cancel", ({ withRequestHandling, set, body, store: { user } }) =>
+        .post("/cancel", ({ body, store: { user } }) => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                await OrderService.orderCancel(body, user.id);
-                return { payload: { data: null }, message: "ยกเลิกรายการสำเร็จ" }
-            })
-        },
+            await OrderService.orderCancel(body, user.id);
+            return { payload: { data: null }, message: "ยกเลิกรายการสำเร็จ" }
+        }),
             {
                 body: t.Object({ id: t.Number() })
             }

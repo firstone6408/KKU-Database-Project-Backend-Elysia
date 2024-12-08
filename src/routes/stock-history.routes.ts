@@ -1,13 +1,11 @@
+import { withRequestHandling } from "../utils/request.utils";
 import { baseRouter } from "./base.routes";
 
 export const stockHistoryRouters = baseRouter.group("/stock-history", { tags: ["Stock Histories"] }, (app) => app
     .guard({ isVerifyAuth: true }, (app) => app
-        .get("/", ({ withRequestHandling, set }) =>
+        .get("/", () => withRequestHandling(async () =>
         {
-            return withRequestHandling({ set }, async () =>
-            {
-                return { payload: { data: {} } }
-            })
-        })
+            return { payload: { data: {} } }
+        }))
     )
 );
