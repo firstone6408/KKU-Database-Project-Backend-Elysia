@@ -1,3 +1,4 @@
+import { UserRole } from "../../prisma/generated/kku_client";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { Jwt } from "../schemas/lib.schema";
 import { HttpError } from "./error.middleware";
@@ -70,4 +71,43 @@ export const verifyAuth = async (token: string, user: JwtPayload, jwt: Jwt) =>
 
   //console.log(userInfo)
   //console.log(user)
+
+  console.log("verifyAuth")
+
 };
+
+export const verifyRole = async (roles: UserRole[], user: JwtPayload) =>
+{
+  const roleCheck = await kkuDB.kkuPrismaClient.user.findFirst(
+    {
+      where: { id: user.id },
+      select: { role: true }
+    }
+  );
+
+  //console.log(user)
+
+  if (!roleCheck)
+  {
+    throw new HttpError(
+      {
+        statusCode: 401,
+        message: "ไม่สามารถยีนยันตัวตนได้",
+        type: "fail"
+      }
+    );
+  }
+
+  // ตรวจสอบว่าบทบาทของผู้ใช้ตรงกับบทบาทใดๆ ในอาร์เรย์ที่ส่งเข้ามา
+  if (!roles.includes(roleCheck.role))
+  {
+    throw new HttpError({
+      statusCode: "Unauthorized",
+      message: "คุณไม่มีสิทธิ์เข้าถึง...",
+      type: "fail"
+    });
+  }
+
+  console.log("verifyRole")
+
+}

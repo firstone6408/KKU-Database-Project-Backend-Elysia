@@ -13,6 +13,11 @@ interface IResponse<T>
   // statusCode?: number | keyof StatusMap;
 }
 
+interface IUtilParams
+{
+  test123: string
+}
+
 function handleZodError(error: unknown)
 {
   if (error instanceof z.ZodError)
@@ -33,7 +38,7 @@ function handleZodError(error: unknown)
 }
 
 export async function withRequestHandling<T>(
-  fn: (...args: any[]) => MaybePromise<IResponse<T>>,
+  fn: (...args: IUtilParams[]) => MaybePromise<IResponse<T>>,
   params1?: { options?: { responseFilterSchema?: z.ZodTypeAny } }
 )
 {

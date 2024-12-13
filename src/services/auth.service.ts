@@ -1,40 +1,50 @@
-import { kkuDB } from "../database/prisma/kku.prisma";
+import { kkuDB } from "../database/prisma/kku.prisma"
 import { HttpError } from "../middlewares/error.middleware";
 import { Jwt } from "../schemas/lib.schema";
-import { comparePassword } from '../utils/crypto.utils'
+import { comparePassword } from "../utils/crypto.utils";
 
 const db = kkuDB.kkuPrismaClient;
 
 export abstract class AuthService
 {
-    public static async login(
-        options: { username: string, password: string },
+
+    public static async login(options:
+        {
+            username: string,
+            password: string
+        },
         jwt: Jwt
     )
     {
-        const existingUser = await db.user.findUnique(
+        const userExsting = await db.user.findUnique(
             {
-                where:
+                where: { username: options.username },
+                select:
                 {
-                    username: options.username
-                },
+                    password: true,
+                    id: true,
+                    username: true,
+                    role: true,
+                    email: true,
+                    branchId: true
+                }
             }
-        )
+        );
 
-        if (!existingUser)
+        if (!userExsting)
         {
             throw new HttpError(
                 {
                     statusCode: 400,
-                    message: "บัญชีนี้ถูกสร้างแล้ว",
+                    message: "ไม่พบผู้ใช้บัญชีนี้",
                     type: "fail"
                 }
-            )
+            );
         }
 
-        // compare password
-        const isMactch = await comparePassword(options.password, existingUser.password);
-        if (!isMactch)
+        const isMatch = await comparePassword(options.password, userExsting.password);
+
+        if (!isMatch)
         {
             throw new HttpError(
                 {
@@ -42,27 +52,29 @@ export abstract class AuthService
                     message: "รหัสผ่านไม่ถูกต้อง",
                     type: "fail"
                 }
-            )
+            );
         }
-
-        // upadate last login
-        await db.user.update({
-            where: { id: existingUser.id },
-            data: { lastLogin: new Date() }
-        });
 
         const userPayload =
         {
-            id: existingUser.id,
-            username: existingUser.username,
-            email: existingUser.email,
-            role: existingUser.role,
-            ...(existingUser.branchId !== null && { branchId: existingUser.branchId })
+            id: userExsting.id,
+            username: userExsting.username,
+            email: userExsting.email,
+            role: userExsting.role,
+            ...(userExsting.branchId !== null && { branchId: userExsting.branchId })
         }
 
         const token = await jwt.sign(userPayload);
 
-        return token
+        // update last login
+        await db.user.update(
+            {
+                where: { id: userExsting.id },
+                data: { lastLogin: new Date() }
+            }
+        );
+
+        return { token };
     }
 
     public static async currentUser(user: JwtPayload)

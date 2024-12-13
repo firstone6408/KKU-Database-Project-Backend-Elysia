@@ -5,77 +5,82 @@ const db = kkuDB.kkuPrismaClient;
 
 export abstract class BranchService
 {
-    public static async createBranch(option: { name: string })
+
+    public static async createBranch(options:
+        {
+            name: string;
+            phoneNumber: string;
+            branchCode: string;
+            address: string;
+        }
+    )
     {
-        const existingBranch = await db.branch.findUnique(
+        const existingBranch = await db.branch.findFirst(
             {
                 where:
                 {
-                    name: option.name
-                }
+                    OR: [
+                        { branchCode: options.branchCode },
+                        { name: options.name }
+                    ]
+                },
+                select: { id: true }
             }
-        )
+        );
 
         if (existingBranch)
         {
             throw new HttpError(
                 {
                     statusCode: 400,
-                    message: "สาขานี้ถูกสร้างแล้ว",
+                    message: "รหัสสาขา หรือ ชื่อสาขานี้ถูกตั้งไปแล้ว",
                     type: "fail"
                 }
-            )
+            );
         }
 
-        return await db.branch.create(
-            {
-                data:
-                {
-                    name: option.name
-                }
-            }
-        )
+        return await db.branch.create({ data: options, select: { id: true } })
     }
 
-    public static async list()
+    public static async listBranches()
     {
         return await db.branch.findMany();
     }
 
-    public static async update(id: number, options: { name: string })
+    public static async updateBranch(id: number, options:
+        {
+            name: string;
+            phoneNumber: string;
+            address: string;
+        }
+    )
     {
         const existingBranch = await db.branch.findUnique(
             {
-                where:
+                where: { id: id },
+                select:
                 {
-                    name: options.name
+                    id: true,
+                    branchCode: true
                 }
-            }
-        )
+            });
 
-        if (existingBranch)
+        if (!existingBranch)
         {
             throw new HttpError(
                 {
-                    statusCode: 400,
-                    message: "มีชื่อสาขานี้อยู่ในระบบแล้ว กรุณาใช้ชื่ออื่น",
+                    statusCode: 404,
+                    message: "ไม่พบสาขา",
                     type: "fail"
                 }
-            )
+            );
         }
 
-        const branch = await db.branch.update(
+        await db.branch.update(
             {
-                where:
-                {
-                    id: id
-                },
-                data:
-                {
-                    name: options.name
-                }
+                where: { id: existingBranch.id, branchCode: existingBranch.branchCode },
+                data: options
             }
-        )
-        return branch
+        );
     }
 }

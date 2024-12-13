@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE `order` MODIFY `totalPrice` DOUBLE NULL,
-    MODIFY `paymentMethod` ENUM('CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'BANK_TRANSFER', 'E_WALLET', 'OTHER') NULL,
-    MODIFY `paymentStatus` ENUM('PENDING', 'PAID', 'FAILED') NULL DEFAULT 'PENDING';

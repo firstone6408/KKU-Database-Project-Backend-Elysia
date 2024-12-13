@@ -1,84 +1,98 @@
+import { UserRole } from "../../prisma/generated/kku_client";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
 import { hashPassword } from "../utils/crypto.utils";
-import { Jwt } from "../schemas/lib.schema";
 
 const db = kkuDB.kkuPrismaClient;
 
-export class UserService
+
+export abstract class UserService
 {
-  public static async create(options:
-    {
-      username: string;
-      password: string;
-      email: string;
-      fullName: string;
-      role: "ADMIN" | "CASHIER" | "MANAGER" | "STAFF";
-      image?: string | undefined;
-      phoneNumber?: string | undefined;
-      branchId?: number | undefined;
-    }
-  )
-  {
-    const existingUser = await db.user.findFirst(
-      {
-        where:
-        {
-          OR:
-            [
-              {
-                username: options.username
-              },
-              {
-                email: options.email
-              }
-            ],
-        },
-      }
-    );
-
-    if (existingUser)
-    {
-      throw new HttpError(
-        {
-          statusCode: 400,
-          message: "Username หรือ Email นี้มีอยู่ในระบบแล้ว",
-          type: "fail",
-        }
-      );
-    }
-
-    const hashedPassword = await hashPassword(options.password);
-
-    const newData =
-    {
-      username: options.username,
-      password: hashedPassword,
-      email: options.email,
-      fullName: options.fullName,
-      role: options.role,
-      image: options.image ?? undefined,
-      phoneNumber: options.phoneNumber ?? undefined,
-      branchId: options.branchId ?? undefined,
-    };
-
-    return await db.user.create({ data: newData });
-  }
-
-  public static async list()
-  {
-    return await db.user.findMany()
-  }
-
-  public static async getById(id: number)
-  {
-    return await db.user.findUnique(
-      {
-        where:
-        {
-          id: id
-        }
-      }
+    public static async createUser(
+        options:
+            {
+                profileImage?: string | undefined;
+                phoneNumber?: string | undefined;
+                branchId?: number | undefined;
+                name: string;
+                username: string;
+                email: string;
+                password: string;
+                role: UserRole;
+            }
     )
-  }
+    {
+        const userExisting = await db.user.findFirst(
+            {
+                where:
+                {
+                    OR: [
+                        { username: options.username },
+                        { email: options.email }
+                    ]
+                },
+                select: { id: true }
+            }
+        );
+
+        if (userExisting)
+        {
+            throw new HttpError(
+                {
+                    statusCode: 400,
+                    message: "มีบัญชีนี้อยู่ในระบบแล้ว",
+                    type: "fail"
+                }
+            );
+        }
+
+        const hasdedPassword = await hashPassword(options.password);
+
+        options.password = hasdedPassword;
+
+        return await db.user.create({ data: options, select: { id: true } });
+    }
+
+    public static async getById(id: number)
+    {
+        return await db.user.findUnique(
+            {
+                where: { id: id },
+                select:
+                {
+                    id: true,
+                    username: true,
+                    email: true,
+                    name: true,
+                    profileImage: true,
+                    phoneNumber: true,
+                    role: true,
+                    status: true,
+                    lastLogin: true,
+                    branch: true
+                }
+            }
+        );
+    }
+
+    public static async list()
+    {
+        return await db.user.findMany(
+            {
+                select:
+                {
+                    id: true,
+                    username: true,
+                    email: true,
+                    name: true,
+                    profileImage: true,
+                    phoneNumber: true,
+                    role: true,
+                    status: true,
+                    lastLogin: true,
+                    branch: true
+                }
+            }
+        );
+    }
 }
