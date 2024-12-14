@@ -3,7 +3,7 @@ import { authPlugin } from "../plugins/auth.plugins";
 import { withRequestHandling } from "../utils/request.utils";
 import { CustomerGroupService } from "../services/customer-group.service";
 
-export const customerGroupCotroller = new Elysia({ prefix: "/customer-group", tags: ["CustomerGroups"] })
+export const customerGroupCotroller = new Elysia({ prefix: "/customer-groups", tags: ["CustomerGroups"] })
     .use(authPlugin)
 
     //

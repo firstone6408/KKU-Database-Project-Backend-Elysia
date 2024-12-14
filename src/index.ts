@@ -9,6 +9,7 @@ import { userController } from "./controllers/user.controller";
 import { kkuDB } from "./database/prisma/kku.prisma";
 import { categoryController } from "./controllers/category.controller";
 import { customerGroupCotroller } from "./controllers/customer-group.controller";
+import { customerController } from "./controllers/customer.controller";
 
 
 
@@ -68,7 +69,9 @@ const app = new Elysia()
                             { name: "Products", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการสินค้า เช่น การเพิ่ม, แก้ไข, หรือ ลบสินค้า" },
                             { name: "Stocks", description: "จุดเชื่อมต่อที่เกี่ยวข้องกับการจัดการสินค้าคงคลัง เช่น การเพิ่ม, ลด หรือ ปรับปรุงจำนวนสินค้าในคลัง" },
                             { name: "Stock Histories", description: "จุดเชื่อมต่อที่เกี่ยวกับประวัติการเปลี่ยนแปลงสินค้าคงคลัง เช่น การเพิ่มหรือการลดสินค้า" },
-                            { name: "Orders", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการคำสั่งซื้อ เช่น การสร้าง, อัปเดต หรือ ยกเลิกคำสั่งซื้อ" }
+                            { name: "Orders", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการคำสั่งซื้อ เช่น การสร้าง, อัปเดต หรือ ยกเลิกคำสั่งซื้อ" },
+                            { name: "CustomerGroups", description: "" },
+                            { name: "Customers", description: "" },
                         ],
                 },
             })
@@ -88,6 +91,7 @@ const app = new Elysia()
         .use(branchController)
         .use(categoryController)
         .use(customerGroupCotroller)
+        .use(customerController)
     )
 
     // Start on port 
