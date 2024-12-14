@@ -76,6 +76,25 @@ export abstract class BranchService
             );
         }
 
+        const branch = await db.branch.findUnique(
+            {
+                where: { name: options.name },
+                select: { name: true }
+            }
+        );
+
+
+        if (branch)
+        {
+            throw new HttpError(
+                {
+                    statusCode: 400,
+                    message: `สาขาชื่อ ${branch.name} ถูกสร้างแล้วในระบบ`,
+                    type: "fail"
+                }
+            );
+        }
+
         await db.branch.update(
             {
                 where: { id: existingBranch.id, branchCode: existingBranch.branchCode },

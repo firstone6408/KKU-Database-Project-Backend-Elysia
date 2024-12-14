@@ -21,6 +21,7 @@ export const authController = new Elysia({ prefix: "/auth", tags: ["Authen"] })
         return { payload: { data: { token: result.token } }, message: "เข้าสู่ระบบสำเร็จ" }
     }),
         {
+            detail: { description: "คำอธิบาย: สำหรับให้ User Login" },
             body: t.Object(
                 {
                     username: t.String(),
@@ -30,17 +31,21 @@ export const authController = new Elysia({ prefix: "/auth", tags: ["Authen"] })
         }
     )
 
-    .guard({ isVerifyAuth: true }, (app) => app
-
-        .post("/logout", ({ cookie: { token } }) => withRequestHandling(async () =>
+    .guard(
         {
-            token.remove();
-            return { payload: { data: null }, message: "ออกจากระบบสำเร็จ" }
-        }))
+            isVerifyAuth: true,
+            detail: { description: "คำอธิบาย: ใช้สำหรับ User ที่ Login แล้ว" }
+        }, (app) => app
 
-        .get("/current-user", ({ store: { userJwt } }) => withRequestHandling(async () =>
-        {
-            const result = await AuthService.currentUser(userJwt);
-            return { payload: { data: result } }
-        }))
+            .post("/logout", ({ cookie: { token } }) => withRequestHandling(async () =>
+            {
+                token.remove();
+                return { payload: { data: null }, message: "ออกจากระบบสำเร็จ" }
+            }))
+
+            .get("/current-user", ({ store: { userJwt } }) => withRequestHandling(async () =>
+            {
+                const result = await AuthService.currentUser(userJwt);
+                return { payload: { data: result } }
+            }))
     )

@@ -7,6 +7,8 @@ import { authController } from "./controllers/auth.controller";
 import { branchController } from "./controllers/branch.controller";
 import { userController } from "./controllers/user.controller";
 import { kkuDB } from "./database/prisma/kku.prisma";
+import { categoryController } from "./controllers/category.controller";
+import { customerGroupCotroller } from "./controllers/customer-group.controller";
 
 
 
@@ -26,11 +28,13 @@ const app = new Elysia()
             ` - Request: [${set.headers["access-control-allow-methods"]}] "${headers["referer"]}" | ${set.status} | Platform: ${headers["sec-ch-ua-platform"]}`
         );
     })
+
+    //
+    // Global error handler
+    //
     .error({ HttpError, Error })
     .onError(({ code, error, set }) =>
     {
-        // console.log(error instanceof HttpError)
-        // console.log(error)
         switch (code)
         {
             case "HttpError":
@@ -72,7 +76,7 @@ const app = new Elysia()
 
 
     //
-    // Routers
+    // Init Routers from Controllers
     //
     .group("/api", (app) => app
         .get("/", () =>
@@ -82,6 +86,8 @@ const app = new Elysia()
         .use(userController)
         .use(authController)
         .use(branchController)
+        .use(categoryController)
+        .use(customerGroupCotroller)
     )
 
     // Start on port 
