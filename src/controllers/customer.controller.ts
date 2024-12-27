@@ -29,12 +29,12 @@ export const customerController = new Elysia({ prefix: "/customers", tags: ["Cus
                     body: t.Object(
                         {
                             customerCode: t.String(),
-                            customerGroupId: t.Number(),
+                            customerGroupId: t.String(),
                             name: t.String(),
                             phoneNumber: t.String(),
                             address: t.Optional(t.String()),
-                            branchId: t.Number(),
-                            userId: t.Number()
+                            branchId: t.String(),
+                            userId: t.String()
                         }
                     )
                 }
@@ -46,10 +46,10 @@ export const customerController = new Elysia({ prefix: "/customers", tags: ["Cus
                 return { payload: { data: null }, message: `อัปเดตลูกค้ารหัส ${customer.customerCode} สำเร็จ` }
             }),
                 {
-                    params: t.Object({ id: t.Number() }),
+                    params: t.Object({ id: t.String() }),
                     body: t.Object(
                         {
-                            customerGroupId: t.Number(),
+                            customerGroupId: t.String(),
                             name: t.String(),
                             phoneNumber: t.String(),
                             address: t.Optional(t.String()),
@@ -65,7 +65,7 @@ export const customerController = new Elysia({ prefix: "/customers", tags: ["Cus
                 return { payload: { data: customers } }
             }),
                 {
-                    params: t.Object({ branchId: t.Number() })
+                    params: t.Object({ branchId: t.String() })
                 }
             )
 
@@ -78,8 +78,8 @@ export const customerController = new Elysia({ prefix: "/customers", tags: ["Cus
                 {
                     params: t.Object(
                         {
-                            branchId: t.Number(),
-                            userId: t.Number()
+                            branchId: t.String(),
+                            userId: t.String()
                         }
                     )
                 }

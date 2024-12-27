@@ -10,6 +10,7 @@ import { kkuDB } from "./database/prisma/kku.prisma";
 import { categoryController } from "./controllers/category.controller";
 import { customerGroupCotroller } from "./controllers/customer-group.controller";
 import { customerController } from "./controllers/customer.controller";
+import { productController } from "./controllers/product.controller";
 
 
 
@@ -92,6 +93,7 @@ const app = new Elysia()
         .use(categoryController)
         .use(customerGroupCotroller)
         .use(customerController)
+        .use(productController)
     )
 
     // Start on port 

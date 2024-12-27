@@ -32,7 +32,7 @@ export const customerGroupCotroller = new Elysia({ prefix: "/customer-groups", t
                 return { payload: { data: null }, message: "อัปเดตกลุ่มสำเร็จ" }
             }),
                 {
-                    params: t.Object({ id: t.Number() }),
+                    params: t.Object({ id: t.String() }),
                     body: t.Object({ name: t.String() })
                 }
             )

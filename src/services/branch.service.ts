@@ -47,7 +47,7 @@ export abstract class BranchService
         return await db.branch.findMany();
     }
 
-    public static async updateBranch(id: number, options:
+    public static async updateBranch(id: string, options:
         {
             name: string;
             phoneNumber: string;

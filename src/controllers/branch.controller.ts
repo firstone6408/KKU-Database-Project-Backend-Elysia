@@ -59,7 +59,7 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
                 return { payload: { data: null } }
             }),
                 {
-                    params: t.Object({ id: t.Number() }),
+                    params: t.Object({ id: t.String() }),
                     body: t.Object(
                         {
                             name: t.String(),
@@ -67,5 +67,6 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
                             address: t.String()
                         }
                     )
-                })
+                }
+            )
     )

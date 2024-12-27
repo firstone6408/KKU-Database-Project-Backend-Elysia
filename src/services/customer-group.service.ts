@@ -26,7 +26,7 @@ export abstract class CustomerGroupService
         return await db.customerGroup.create({ data: options, select: { name: true } });
     }
 
-    public static async updateCustomerGroup(id: number, options: { name: string })
+    public static async updateCustomerGroup(id: string, options: { name: string })
     {
         const existingCustomerGroup = await db.customerGroup.findUnique(
             { where: { id: id }, select: { id: true } }

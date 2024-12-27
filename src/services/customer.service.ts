@@ -9,11 +9,11 @@ export abstract class CustomerService
         {
             name: string;
             customerCode: string;
-            customerGroupId: number;
+            customerGroupId: string;
             phoneNumber: string;
             address?: string | undefined;
-            branchId: number;
-            userId: number;
+            branchId: string;
+            userId: string;
         }
     )
     {
@@ -80,7 +80,7 @@ export abstract class CustomerService
         return await db.customer.create({ data: options, select: { name: true } });
     }
 
-    public static async listCustomersByBranchId(branchId: number)
+    public static async listCustomersByBranchId(branchId: string)
     {
         const existingBranch = await db.branch.findUnique({ where: { id: branchId }, select: { id: true } });
 
@@ -123,7 +123,7 @@ export abstract class CustomerService
         );
     }
 
-    public static async listCustomersByBranchIdAndUserId(branchId: number, userId: number)
+    public static async listCustomersByBranchIdAndUserId(branchId: string, userId: string)
     {
         const existingBranch = await db.branch.findUnique({ where: { id: branchId }, select: { id: true } });
 
@@ -172,11 +172,11 @@ export abstract class CustomerService
         );
     }
 
-    public static async updateCustomerById(id: number, options:
+    public static async updateCustomerById(id: string, options:
         {
             address?: string | undefined;
             name: string;
-            customerGroupId: number;
+            customerGroupId: string;
             phoneNumber: string;
         }
     )

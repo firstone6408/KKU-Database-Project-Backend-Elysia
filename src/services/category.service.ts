@@ -40,7 +40,7 @@ export abstract class CategoryService
         return await db.category.create({ data: options });
     }
 
-    public static async updateCategory(id: number, options: { name: string })
+    public static async updateCategory(id: string, options: { name: string })
     {
         const exstingCategory = await db.category.findUnique(
             {
@@ -86,7 +86,7 @@ export abstract class CategoryService
         );
     }
 
-    public static async deleteCategory(id: number)
+    public static async deleteCategory(id: string)
     {
         const exstingCategory = await db.category.findUnique(
             {

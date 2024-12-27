@@ -21,21 +21,20 @@ enum UserStatus {
 }
 
 model Branch {
-    id          Int    @id @default(autoincrement())
-    branchCode  String @unique
-    name        String @unique
+    id          String   @id @default(uuid())
+    branchCode  String   @unique
+    name        String   @unique
     phoneNumber String
     address     String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 
     User     User[]
     Customer Customer[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
 }
 
 model User {
-    id           Int        @id @default(autoincrement())
+    id           String     @id @default(uuid())
     username     String     @unique
     email        String     @unique
     password     String
@@ -45,48 +44,62 @@ model User {
     role         UserRole
     status       UserStatus @default(ACTIVE)
     lastLogin    DateTime?
-    branchId     Int?
-    branch       Branch?    @relation(fields: [branchId], references: [id])
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
+
+    branchId String?
+    branch   Branch? @relation(fields: [branchId], references: [id])
 
     Customer Customer[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
 }
 
 model CustomerGroup {
-    id   Int    @id @default(autoincrement())
-    name String @unique
-
-    Customer Customer[]
-
+    id        String   @id @default(uuid())
+    name      String   @unique
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    Customer Customer[]
 }
 
 model Customer {
-    id           Int     @id @default(autoincrement())
-    customerCode String  @unique
+    id           String   @id @default(uuid())
+    customerCode String   @unique
     name         String
     phoneNumber  String
     address      String?
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
-    customerGroupId Int
+    customerGroupId String
     customerGroup   CustomerGroup @relation(fields: [customerGroupId], references: [id])
-    branchId        Int
+    branchId        String
     branch          Branch        @relation(fields: [branchId], references: [id])
-    userId          Int
+    userId          String
     user            User          @relation(fields: [userId], references: [id])
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
 }
 
 model Category {
-    id           Int    @id @default(autoincrement())
-    categoryCode String @unique
-    name         String @unique
+    id           String   @id @default(uuid())
+    categoryCode String   @unique
+    name         String   @unique
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    Product Product[]
+}
+
+model Product {
+    id          String    @id @default(uuid())
+    productCode String    @unique
+    name        String    @unique
+    description String?
+    image       String?
+    isDeleted   Boolean   @default(false)
+    deletedAt   DateTime?
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    categoryId String
+    category   Category @relation(fields: [categoryId], references: [id])
 }

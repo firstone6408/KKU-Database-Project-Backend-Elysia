@@ -13,7 +13,7 @@ export abstract class UserService
             {
                 profileImage?: string | undefined;
                 phoneNumber?: string | undefined;
-                branchId?: number | undefined;
+                branchId?: string | undefined;
                 name: string;
                 username: string;
                 email: string;
@@ -53,7 +53,7 @@ export abstract class UserService
         return await db.user.create({ data: options, select: { id: true } });
     }
 
-    public static async getById(id: number)
+    public static async getById(id: string)
     {
         return await db.user.findUnique(
             {

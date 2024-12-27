@@ -32,10 +32,11 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
                         profileImage: t.Optional(t.String()),
                         phoneNumber: t.Optional(t.String()),
                         role: t.Enum(UserRole),
-                        branchId: t.Optional(t.Number())
+                        branchId: t.Optional(t.String())
                     }
                 )
-            })
+            }
+            )
     )
 
 
@@ -55,7 +56,7 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
                 return { payload: { data: user } }
             }),
                 {
-                    params: t.Object({ id: t.Number() })
+                    params: t.Object({ id: t.String() })
                 }
             )
 

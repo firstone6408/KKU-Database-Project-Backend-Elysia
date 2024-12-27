@@ -1,7 +1,7 @@
 type JwtPayload = {
-    id: number;
+    id: string;
     username: string;
     email: string;
     role: string;
-    branchId: number | null
+    branchId: string | null
 }

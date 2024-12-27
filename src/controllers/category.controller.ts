@@ -39,7 +39,7 @@ export const categoryController = new Elysia({ prefix: "/categories", tags: ["Ca
                 return { payload: { data: null }, message: "อัปเดตหมวดหมู่สินค้าสำเร็จ" }
             }),
                 {
-                    params: t.Object({ id: t.Number() }),
+                    params: t.Object({ id: t.String() }),
                     body: t.Object({ name: t.String() })
                 }
             )
@@ -52,7 +52,7 @@ export const categoryController = new Elysia({ prefix: "/categories", tags: ["Ca
                 return { payload: { data: null }, message: `ลบหมวดหมู่ ${result.name} สำเร็จ` }
             }),
                 {
-                    params: t.Object({ id: t.Number() })
+                    params: t.Object({ id: t.String() })
                 }
             )
     )
