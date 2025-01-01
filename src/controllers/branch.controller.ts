@@ -7,9 +7,6 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
     .use(authPlugin)
 
 
-    //
-    // verify auth, role: "ADMIN"
-    //
     .guard(
         {
             isVerifyAuth: true,
@@ -34,19 +31,11 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
                 }
             )
 
-            .get("/", () => withRequestHandling(async () =>
-            {
-                const branches = await BranchService.listBranches();
-                return { payload: { data: branches } }
-            }))
 
     )
 
 
 
-    //
-    // verify auth, role: "ADMIN", "MANAGER"
-    //
     .guard(
         {
             isVerifyAuth: true,
@@ -69,4 +58,23 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
                     )
                 }
             )
+    )
+
+    .guard(
+        {
+            isVerifyAuth: true,
+        }, (app) => app
+
+            .get("/", ({ store: { userJwt } }) => withRequestHandling(async () =>
+            {
+                const branches = await BranchService.listBranches(userJwt);
+                return { payload: { data: branches } }
+            }))
+
+
+            .get("/:id", ({ params }) => withRequestHandling(async () =>
+            {
+                const branch = await BranchService.getBranchById(params.id);
+                return { payload: { data: branch } }
+            }), { params: t.Object({ id: t.String() }) })
     )

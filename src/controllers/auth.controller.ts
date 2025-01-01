@@ -9,26 +9,24 @@ export const authController = new Elysia({
 })
   .use(authPlugin)
 
-  .post(
-    "/login",
-    ({ jwt, body, cookie: { token } }) =>
-      withRequestHandling(async () =>
+  .post("/login", ({ jwt, body, cookie: { token } }) => withRequestHandling(async () =>
+  {
+    const result = await AuthService.login(body, jwt);
+    // console.log(result)
+    token.set(
       {
-        const result = await AuthService.login(body, jwt);
-        token.set(
-          {
-            value: result.token,
-            httpOnly: true,
-            secure: true,
-            maxAge: 60 * 60 * 24 * 7, // 7d
-          }
+        value: result.token,
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 60 * 24 * 7, // 7d
+      }
 
-        );
-        return {
-          payload: { data: { token: result.token, user: result.user } },
-          message: "เข้าสู่ระบบสำเร็จ",
-        };
-      }),
+    );
+    return {
+      payload: { data: { token: result.token, user: result.user } },
+      message: "เข้าสู่ระบบสำเร็จ",
+    };
+  }),
     {
       detail: { description: "คำอธิบาย: สำหรับให้ User Login" },
       body: t.Object(
@@ -68,25 +66,20 @@ export const authController = new Elysia({
       isVerifyAuth: true,
       detail: { description: "คำอธิบาย: ใช้สำหรับ User ที่ Login แล้ว" },
     },
-    (app) =>
-      app
+    (app) => app
 
-        .post("/logout", ({ cookie: { token } }) =>
-          withRequestHandling(async () =>
-          {
-            token.remove();
-            return {
-              payload: { data: null },
-              message: "ออกจากระบบสำเร็จ",
-            };
-          })
-        )
+      .post("/logout", ({ cookie: { token } }) => withRequestHandling(async () =>
+      {
+        token.remove();
+        return {
+          payload: { data: null },
+          message: "ออกจากระบบสำเร็จ",
+        };
+      }))
 
-        .get("/current-user", ({ store: { userJwt } }) =>
-          withRequestHandling(async () =>
-          {
-            const result = await AuthService.currentUser(userJwt);
-            return { payload: { data: result } };
-          })
-        )
+      .get("/current-user", ({ store: { userJwt } }) => withRequestHandling(async () =>
+      {
+        const result = await AuthService.currentUser(userJwt);
+        return { payload: { data: result } };
+      }))
   );

@@ -7,9 +7,7 @@ import { UserService } from "../services/user.service";
 export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
     .use(authPlugin)
 
-    //
-    // verify auth, role: "ADMIN"
-    //
+
     .guard(
         {
             isVerifyAuth: true,
@@ -41,9 +39,6 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
 
 
 
-    //
-    // verify auth
-    //
     .guard(
         {
             isVerifyAuth: true,

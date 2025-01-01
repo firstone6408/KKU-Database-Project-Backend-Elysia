@@ -6,9 +6,7 @@ import { CustomerGroupService } from "../services/customer-group.service";
 export const customerGroupCotroller = new Elysia({ prefix: "/customer-groups", tags: ["CustomerGroups"] })
     .use(authPlugin)
 
-    //
-    // verify auth, role: "ADMIN"
-    //
+
     .guard(
         {
             isVerifyAuth: true,
@@ -38,9 +36,7 @@ export const customerGroupCotroller = new Elysia({ prefix: "/customer-groups", t
             )
     )
 
-    //
-    // verify auth
-    //
+
     .guard(
         {
             isVerifyAuth: true,

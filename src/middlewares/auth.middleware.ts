@@ -3,9 +3,17 @@ import { kkuDB } from "../database/prisma/kku.prisma";
 import { Jwt } from "../schemas/lib.schema";
 import { HttpError } from "./error.middleware";
 
-export const verifyAuth = async (token: string, user: JwtPayload, jwt: Jwt) =>
+export const verifyAuth = async (token: string, user: JwtPayload, jwt: Jwt, request: Request) =>
 {
   // const token = headers.get("Authorization");
+  const _token = request.headers.get("Authorization");
+  if (_token)
+  {
+    token = _token.split(" ")[1];
+  }
+
+  // console.log("Token:", token)
+
   if (!token || token === "")
   {
     throw new HttpError(
@@ -72,7 +80,7 @@ export const verifyAuth = async (token: string, user: JwtPayload, jwt: Jwt) =>
   //console.log(userInfo)
   //console.log(user)
 
-  console.log("verifyAuth")
+  //console.log("verifyAuth")
 
 };
 
@@ -108,6 +116,6 @@ export const verifyRole = async (roles: UserRole[], user: JwtPayload) =>
     });
   }
 
-  console.log("verifyRole")
+  // console.log("verifyRole")
 
 }

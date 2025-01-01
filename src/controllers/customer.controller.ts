@@ -7,9 +7,6 @@ export const customerController = new Elysia({ prefix: "/customers", tags: ["Cus
     .use(authPlugin)
 
 
-    //
-    // verify auth
-    //
     .guard(
         {
             isVerifyAuth: true,

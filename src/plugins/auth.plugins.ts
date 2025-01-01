@@ -17,8 +17,8 @@ export const authPlugin = new Elysia()
             isVerifyAuth(enabled: boolean)
             {
                 if (!enabled) return
-                onBeforeHandle(async ({ cookie: { token }, store: { userJwt }, jwt }) =>
-                    verifyAuth(token.value || "", userJwt, jwt))
+                onBeforeHandle(async ({ cookie: { token }, store: { userJwt }, jwt, request }) =>
+                    verifyAuth(token.value || "", userJwt, jwt, request))
             },
             isVerifyRole(userRole: UserRole[])
             {

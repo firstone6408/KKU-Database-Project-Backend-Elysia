@@ -42,9 +42,18 @@ export abstract class BranchService
         return await db.branch.create({ data: options, select: { id: true } })
     }
 
-    public static async listBranches()
+    public static async listBranches(userJwt: JwtPayload)
     {
-        return await db.branch.findMany();
+        if (userJwt.role === "ADMIN")
+        {
+            return await db.branch.findMany();
+        }
+        return await db.branch.findMany({ where: { id: userJwt.branchId ?? "" } });
+    }
+
+    public static async getBranchById(id: string)
+    {
+        return await db.branch.findMany({ where: { id: id } });
     }
 
     public static async updateBranch(id: string, options:

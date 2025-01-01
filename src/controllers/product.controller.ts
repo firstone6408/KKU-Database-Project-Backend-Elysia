@@ -6,9 +6,7 @@ import { ProductService } from "../services/product.service";
 export const productController = new Elysia({ prefix: "/products", tags: ["Products"] })
     .use(authPlugin)
 
-    //
-    // verify auth, role: "ADMIN"
-    //
+
     .guard(
         {
             isVerifyAuth: true,
@@ -76,9 +74,7 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
             )
     )
 
-    //
-    // verify auth
-    //
+
     .guard(
         {
             isVerifyAuth: true,
@@ -102,5 +98,17 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
                 return { payload: { data: product } }
             }),
                 { params: t.Object({ id: t.String() }) }
+            )
+
+
+
+            .get("/branch/:branchId", ({ params }) => withRequestHandling(async () =>
+            {
+                const products = await ProductService.listProductsByBranchId(params.branchId);
+                return { payload: { data: products } }
+            }),
+                {
+                    params: t.Object({ branchId: t.String() })
+                }
             )
     )

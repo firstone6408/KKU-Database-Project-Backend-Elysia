@@ -6,12 +6,11 @@ import { CategoryService } from "../services/category.service";
 export const categoryController = new Elysia({ prefix: "/categories", tags: ["Categories"] })
     .use(authPlugin)
 
-    //
-    // verify auth, role: "ADMIN"
-    //
+
     .guard(
         {
-            isVerifyAuth: true, isVerifyRole: ["ADMIN"],
+            isVerifyAuth: true,
+            isVerifyRole: ["ADMIN"],
             detail: { description: "คำอธิบาย: ใช้ได้เฉพาะ ADMIN เท่านั้น" },
         }
         , (app) => app
@@ -58,9 +57,7 @@ export const categoryController = new Elysia({ prefix: "/categories", tags: ["Ca
     )
 
 
-    //
-    // verify auth
-    //
+
     .guard(
         {
             isVerifyAuth: true,

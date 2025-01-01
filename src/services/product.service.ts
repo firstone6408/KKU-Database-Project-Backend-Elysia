@@ -3,6 +3,22 @@ import { HttpError } from "../middlewares/error.middleware";
 
 const db = kkuDB.kkuPrismaClient;
 
+const standardResponse = {
+    category:
+    {
+        select:
+        {
+            id: true,
+            categoryCode: true,
+            name: true
+        }
+    },
+    ProductSaleBranch:
+    {
+        select: { sellPrice: true }
+    }
+}
+
 export abstract class ProductService
 {
 
@@ -187,18 +203,8 @@ export abstract class ProductService
                 {
                     isDeleted: false
                 },
-                include:
-                {
-                    category:
-                    {
-                        select:
-                        {
-                            id: true,
-                            categoryCode: true,
-                            name: true
-                        }
-                    }
-                }
+                include: standardResponse
+
             }
         );
 
@@ -216,21 +222,53 @@ export abstract class ProductService
                         { isDeleted: false }
                     ]
                 },
-                include:
-                {
-                    category:
-                    {
-                        select:
-                        {
-                            id: true,
-                            categoryCode: true,
-                            name: true
-                        }
-                    }
-                }
+                include: standardResponse
             }
         );
 
         return product;
+    }
+
+    public static async listProductsByBranchId(branchId: string)
+    {
+        const products = await db.productSaleBranch.findMany(
+            {
+                where:
+                {
+                    AND: [
+                        { branchId: branchId },
+                        {
+                            product:
+                            {
+                                isDeleted: false
+                            }
+                        }
+                    ]
+                },
+                select:
+                {
+                    sellPrice: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    product:
+                    {
+                        include:
+                        {
+                            category:
+                            {
+                                select:
+                                {
+                                    id: true,
+                                    categoryCode: true,
+                                    name: true
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        );
+
+        return products;
     }
 }

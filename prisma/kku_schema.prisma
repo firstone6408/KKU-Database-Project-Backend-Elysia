@@ -20,6 +20,23 @@ enum UserStatus {
     SUSPENDED
 }
 
+enum StockInType {
+    RETURN // การคืนสินค้า
+    ORDER // การสั่งซื้อ
+    OTHER // อื่นๆ
+}
+
+enum StockOutType {
+    SALE
+}
+
+enum OrderStatus {
+    PENDING
+    COMPLETED
+    CANCELLED
+    REFUNDED
+}
+
 model Branch {
     id          String   @id @default(uuid())
     branchCode  String   @unique
@@ -29,8 +46,11 @@ model Branch {
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
 
-    User     User[]
-    Customer Customer[]
+    User              User[]
+    Customer          Customer[]
+    Stock             Stock[]
+    ProductSaleBranch ProductSaleBranch[]
+    Order             Order[]
 }
 
 model User {
@@ -50,7 +70,9 @@ model User {
     branchId String?
     branch   Branch? @relation(fields: [branchId], references: [id])
 
-    Customer Customer[]
+    Customer       Customer[]
+    StockInHistory StockInHistory[]
+    Order          Order[]
 }
 
 model CustomerGroup {
@@ -77,6 +99,7 @@ model Customer {
     branch          Branch        @relation(fields: [branchId], references: [id])
     userId          String
     user            User          @relation(fields: [userId], references: [id])
+    Order           Order[]
 }
 
 model Category {
@@ -102,4 +125,120 @@ model Product {
 
     categoryId String
     category   Category @relation(fields: [categoryId], references: [id])
+
+    Stock             Stock[]
+    ProductSaleBranch ProductSaleBranch[]
+    OrderItem         OrderItem[]
+}
+
+model Stock {
+    id        String   @id @default(uuid())
+    quantity  Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    productId String
+    product   Product @relation(fields: [productId], references: [id])
+    branchId  String
+    branch    Branch  @relation(fields: [branchId], references: [id])
+
+    StockInHistory  StockInHistory[]
+    StockOutHistory StockOutHistory[]
+
+    @@unique([productId, branchId]) // เพิ่ม unique composite key ให้ทั้งสอง
+}
+
+model StockInHistory {
+    id        String      @id @default(uuid())
+    refCode   String      @unique
+    costPrice Float
+    quantity  Int
+    type      StockInType
+    note      String?
+    createdAt DateTime    @default(now())
+
+    stockId String
+    stock   Stock  @relation(fields: [stockId], references: [id])
+    userId  String
+    user    User   @relation(fields: [userId], references: [id])
+}
+
+model StockOutHistory {
+    id        String       @id @default(uuid())
+    quantity  Int
+    type      StockOutType
+    note      String?
+    createdAt DateTime     @default(now())
+
+    stockId String
+    stock   Stock  @relation(fields: [stockId], references: [id])
+}
+
+model ProductSaleBranch {
+    sellPrice Float
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    productId String
+    product   Product @relation(fields: [productId], references: [id])
+    branchId  String
+    branch    Branch  @relation(fields: [branchId], references: [id])
+
+    @@unique([productId, branchId])
+}
+
+model Order {
+    id         String      @id @default(uuid())
+    totalPrice Float?
+    status     OrderStatus @default(PENDING)
+    note       String?
+    createdAt  DateTime    @default(now())
+    updatedAt  DateTime    @updatedAt
+
+    paymentOrderId String?
+    paymentOrder   PaymentOrder? @relation(fields: [paymentOrderId], references: [id])
+    customerId     String
+    customer       Customer      @relation(fields: [customerId], references: [id])
+    userId         String
+    user           User          @relation(fields: [userId], references: [id])
+    branchId       String
+    branch         Branch        @relation(fields: [branchId], references: [id])
+
+    OrderItem OrderItem[]
+
+    @@unique([customerId, userId, branchId])
+}
+
+model OrderItem {
+    orderId   String
+    order     Order    @relation(fields: [orderId], references: [id])
+    sellPrice Float
+    quantity  Int
+    createdAt DateTime @default(now())
+
+    productId String
+    product   Product @relation(fields: [productId], references: [id])
+
+    @@unique([orderId, productId])
+}
+
+model PaymentMethod {
+    id        String   @id @default(uuid())
+    name      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    PaymentOrder PaymentOrder[]
+}
+
+model PaymentOrder {
+    id             String   @id @default(uuid())
+    amountRecevied Float
+    change         Float
+    createdAt      DateTime @default(now())
+
+    paymentMethodId String
+    paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+    Order Order[]
 }

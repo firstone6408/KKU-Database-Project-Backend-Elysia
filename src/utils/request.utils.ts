@@ -73,7 +73,7 @@ export async function withRequestHandling<T>(
 
     return {
       ok: result.ok ?? true,
-      message: result.message ?? "Call api success",
+      message: result.message ?? "Success",
       payload: validatedPayload
     }
   }

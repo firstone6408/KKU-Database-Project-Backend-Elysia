@@ -11,6 +11,10 @@ import { categoryController } from "./controllers/category.controller";
 import { customerGroupCotroller } from "./controllers/customer-group.controller";
 import { customerController } from "./controllers/customer.controller";
 import { productController } from "./controllers/product.controller";
+import { stockController } from "./controllers/stock.controller";
+import { productSaleBranchController } from "./controllers/product-sale-branch.controller";
+import { paymentMethodController } from "./controllers/payment-method.controller";
+import { orderController } from "./controllers/order.controller";
 
 
 
@@ -20,7 +24,7 @@ const app = new Elysia()
     //
     .use(cors(
         {
-            origin: ["http://localhost:3001"],
+            origin: ["http://localhost:3000"]
         }
     ))
     .use(staticPlugin())
@@ -68,8 +72,10 @@ const app = new Elysia()
                             { name: "Branches", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการสาขา เช่น การเพิ่ม, แก้ไข หรือ ลบสาขา" },
                             { name: "Categories", description: "จุดเชื่อมต่อที่เกี่ยวข้องกับการจัดการหมวดหมู่สินค้า เช่น การเพิ่ม, แก้ไข หรือ ลบหมวดหมู่" },
                             { name: "Products", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการสินค้า เช่น การเพิ่ม, แก้ไข, หรือ ลบสินค้า" },
+                            { name: "ProductSaleBranches", description: "" },
                             { name: "Stocks", description: "จุดเชื่อมต่อที่เกี่ยวข้องกับการจัดการสินค้าคงคลัง เช่น การเพิ่ม, ลด หรือ ปรับปรุงจำนวนสินค้าในคลัง" },
                             { name: "Stock Histories", description: "จุดเชื่อมต่อที่เกี่ยวกับประวัติการเปลี่ยนแปลงสินค้าคงคลัง เช่น การเพิ่มหรือการลดสินค้า" },
+                            { name: "PaymentMethods", description: "" },
                             { name: "Orders", description: "จุดเชื่อมต่อที่เกี่ยวกับการจัดการคำสั่งซื้อ เช่น การสร้าง, อัปเดต หรือ ยกเลิกคำสั่งซื้อ" },
                             { name: "CustomerGroups", description: "" },
                             { name: "Customers", description: "" },
@@ -94,6 +100,10 @@ const app = new Elysia()
         .use(customerGroupCotroller)
         .use(customerController)
         .use(productController)
+        .use(stockController)
+        .use(productSaleBranchController)
+        .use(paymentMethodController)
+        .use(orderController)
     )
 
     // Start on port 
