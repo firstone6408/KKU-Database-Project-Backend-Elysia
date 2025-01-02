@@ -39,7 +39,7 @@ export const categoryController = new Elysia({ prefix: "/categories", tags: ["Ca
             }),
                 {
                     params: t.Object({ id: t.String() }),
-                    body: t.Object({ name: t.String() })
+                    body: t.Object({ categoryCode: t.String(), name: t.String() })
                 }
             )
 

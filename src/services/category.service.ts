@@ -40,7 +40,7 @@ export abstract class CategoryService
         return await db.category.create({ data: options });
     }
 
-    public static async updateCategory(id: string, options: { name: string })
+    public static async updateCategory(id: string, options: { categoryCode: string, name: string })
     {
         const exstingCategory = await db.category.findUnique(
             {
@@ -60,9 +60,14 @@ export abstract class CategoryService
             );
         }
 
-        const category = await db.category.findUnique(
+        const category = await db.category.findFirst(
             {
-                where: { name: options.name },
+                where: {
+                    AND: [
+                        { name: options.name },
+                        { categoryCode: options.categoryCode }
+                    ]
+                },
                 select: { name: true }
             }
         );
@@ -111,6 +116,6 @@ export abstract class CategoryService
 
     public static async listCategories()
     {
-        return await db.category.findMany();
+        return await db.category.findMany({ orderBy: { createdAt: "desc" } });
     }
 }

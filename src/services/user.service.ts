@@ -1,17 +1,31 @@
 import { UserRole } from "../../prisma/generated/kku_client";
+import { filePathConfig } from "../config/file-path.config";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
 import { hashPassword } from "../utils/crypto.utils";
+import { ImageFileHandler } from "../utils/file.utils";
 
 const db = kkuDB.kkuPrismaClient;
 
+const standardResponse = {
+    id: true,
+    username: true,
+    email: true,
+    name: true,
+    profileImage: true,
+    phoneNumber: true,
+    role: true,
+    status: true,
+    lastLogin: true,
+    branch: true
+}
 
 export abstract class UserService
 {
     public static async createUser(
         options:
             {
-                profileImage?: string | undefined;
+                profileImage?: File | undefined;
                 phoneNumber?: string | undefined;
                 branchId?: string | undefined;
                 name: string;
@@ -22,6 +36,7 @@ export abstract class UserService
             }
     )
     {
+
         const userExisting = await db.user.findFirst(
             {
                 where:
@@ -50,7 +65,17 @@ export abstract class UserService
 
         options.password = hasdedPassword;
 
-        return await db.user.create({ data: options, select: { id: true } });
+        const { profileImage, ...restData } = options;
+
+        let data: any = { ...restData };
+
+        if (profileImage)
+        {
+            const pathImage = await new ImageFileHandler(filePathConfig.USER_PROFILE).saveFile(profileImage);
+            data.profileImage = pathImage;
+        }
+
+        return await db.user.create({ data: data, select: { id: true } });
     }
 
     public static async getById(id: string)
@@ -58,19 +83,7 @@ export abstract class UserService
         return await db.user.findUnique(
             {
                 where: { id: id },
-                select:
-                {
-                    id: true,
-                    username: true,
-                    email: true,
-                    name: true,
-                    profileImage: true,
-                    phoneNumber: true,
-                    role: true,
-                    status: true,
-                    lastLogin: true,
-                    branch: true
-                }
+                select: standardResponse
             }
         );
     }
@@ -79,19 +92,19 @@ export abstract class UserService
     {
         return await db.user.findMany(
             {
-                select:
-                {
-                    id: true,
-                    username: true,
-                    email: true,
-                    name: true,
-                    profileImage: true,
-                    phoneNumber: true,
-                    role: true,
-                    status: true,
-                    lastLogin: true,
-                    branch: true
-                }
+                select: standardResponse,
+                orderBy: { createdAt: "desc" }
+            }
+        );
+    }
+
+    public static async listUsersByBranchId(branchId: string)
+    {
+        return await db.user.findMany(
+            {
+                where: { branchId: branchId },
+                select: standardResponse,
+                orderBy: { createdAt: "desc" }
             }
         );
     }

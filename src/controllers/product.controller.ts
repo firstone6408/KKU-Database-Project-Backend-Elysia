@@ -44,6 +44,7 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
 
             .put("/:id", ({ params, body }) => withRequestHandling(async () =>
             {
+                //console.log(body)
                 const productUpdated = await ProductService.updateProduct(params.id, body);
                 return {
                     payload: { data: null },
@@ -56,8 +57,10 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
                         {
                             name: t.Optional(t.String()),
                             description: t.Optional(t.String()),
-                            image: t.Optional(t.String()),
-                            categoryId: t.Optional(t.String())
+                            image: t.Optional(t.File()),
+                            categoryId: t.Optional(t.String()),
+                            productCode: t.String(),
+                            isDeleted: t.BooleanString()
                         }
                     )
                 }
@@ -72,6 +75,12 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
             }),
                 { params: t.Object({ id: t.String() }) }
             )
+
+            .get("/", () => withRequestHandling(async () =>
+            {
+                const products = await ProductService.listProducts();
+                return { payload: { data: products } }
+            }))
     )
 
 
@@ -84,11 +93,6 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
 
 
 
-            .get("/", () => withRequestHandling(async () =>
-            {
-                const products = await ProductService.listProducts();
-                return { payload: { data: products } }
-            }))
 
 
 

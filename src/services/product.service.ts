@@ -1,5 +1,7 @@
+import { filePathConfig } from "../config/file-path.config";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
+import { ImageFileHandler } from "../utils/file.utils";
 
 const db = kkuDB.kkuPrismaClient;
 
@@ -73,22 +75,18 @@ export abstract class ProductService
         {
             description?: string | undefined;
             name?: string | undefined;
-            image?: string | undefined;
+            image?: File | undefined;
             categoryId?: string | undefined;
+            productCode: string;
+            isDeleted: boolean;
         }
     )
     {
         // check product in db
         const existingProduct = await db.product.findFirst(
             {
-                where:
-                {
-                    AND: [
-                        { id: id },
-                        { isDeleted: false }
-                    ]
-                },
-                select: { id: true }
+                where: { id: id },
+                select: { id: true, image: true, isDeleted: true }
             }
         );
 
@@ -103,28 +101,28 @@ export abstract class ProductService
             );
         }
 
-        // check name
-        if (options.name)
-        {
-            // check category in db
-            const existingProductName = await db.product.findUnique(
-                {
-                    where: { name: options.name },
-                    select: { id: true }
-                }
-            );
+        // // check name
+        // if (options.name)
+        // {
+        //     // check category in db
+        //     const existingProductName = await db.product.findUnique(
+        //         {
+        //             where: { name: options.name },
+        //             select: { id: true }
+        //         }
+        //     );
 
-            if (existingProductName)
-            {
-                throw new HttpError(
-                    {
-                        message: `ชื่อสินค้า ${options.name} มีอยู่ในระบบแล้ว`,
-                        statusCode: 400,
-                        type: "fail"
-                    }
-                );
-            }
-        }
+        //     if (existingProductName)
+        //     {
+        //         throw new HttpError(
+        //             {
+        //                 message: `ชื่อสินค้า ${options.name} มีอยู่ในระบบแล้ว`,
+        //                 statusCode: 400,
+        //                 type: "fail"
+        //             }
+        //         );
+        //     }
+        // }
 
         // check categoryId
         if (options.categoryId)
@@ -150,11 +148,43 @@ export abstract class ProductService
             }
         }
 
+        const { image: imageUpload, isDeleted, ...restData } = options;
+
+        let data: any = { ...restData };
+
+        if (isDeleted && !existingProduct.isDeleted)
+        {
+            //console.log("กำลังลบ")
+            this.softRemoveProduct(id);
+        }
+        if (!isDeleted && existingProduct.isDeleted)
+        {
+            //console.log("กำลังคืน")
+            this.cancelsoftRemoveProduct(id);
+        }
+
+        if (imageUpload)
+        {
+            let pathImage: string;
+            const imageHandler = new ImageFileHandler(filePathConfig.PRODUCT_IMAGE);
+            if (existingProduct.image)
+            {
+                pathImage = await imageHandler.updateFile(existingProduct.image, imageUpload);
+            }
+            else
+            {
+                pathImage = await imageHandler.saveFile(imageUpload);
+            }
+            data.image = pathImage;
+        }
+
+
+
         // update product
         const updated = await db.product.update(
             {
                 where: { id: existingProduct.id },
-                data: options,
+                data: data,
                 select: { productCode: true }
             }
         );
@@ -195,15 +225,43 @@ export abstract class ProductService
         );
     }
 
+    public static async cancelsoftRemoveProduct(id: string)
+    {
+        const existingProduct = await db.product.findUnique(
+            {
+                where: { id: id },
+                select: { id: true }
+            }
+        );
+
+        if (!existingProduct)
+        {
+            throw new HttpError(
+                {
+                    message: `ไม่พบสินค้ารหัส ${id} ในระบบ`,
+                    statusCode: 404,
+                    type: "fail"
+                }
+            );
+        }
+
+        await db.product.update(
+            {
+                where: { id: id },
+                data: {
+                    isDeleted: false
+                }
+            }
+        );
+    }
+
     public static async listProducts()
     {
+        const { category } = standardResponse;
         const products = await db.product.findMany(
             {
-                where:
-                {
-                    isDeleted: false
-                },
-                include: standardResponse
+                include: { category: category },
+                orderBy: { createdAt: "desc" }
 
             }
         );
@@ -265,7 +323,8 @@ export abstract class ProductService
                             },
                         }
                     },
-                }
+                },
+                orderBy: { createdAt: "desc" }
             }
         );
 

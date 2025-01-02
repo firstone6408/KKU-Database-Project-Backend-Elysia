@@ -11,7 +11,7 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
     .guard(
         {
             isVerifyAuth: true,
-            isVerifyRole: ["ADMIN"],
+            isVerifyRole: ["ADMIN", "MANAGER"],
             detail: { description: "คำอธิบาย: ใช้สำหรับ ADMIN เท่านั้น" }
         }, (app) => app
             .post("/", ({ body, set }) => withRequestHandling(async () =>
@@ -27,7 +27,7 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
                         email: t.String(),
                         password: t.String(),
                         name: t.String(),
-                        profileImage: t.Optional(t.String()),
+                        profileImage: t.Optional(t.File()),
                         phoneNumber: t.Optional(t.String()),
                         role: t.Enum(UserRole),
                         branchId: t.Optional(t.String())
@@ -62,5 +62,12 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
                 const users = await UserService.list();
                 return { payload: { data: users } }
             }))
+
+
+            .get("/branch/:branchId", ({ params }) => withRequestHandling(async () =>
+            {
+                const users = await UserService.listUsersByBranchId(params.branchId);
+                return { payload: { data: users } }
+            }), { params: t.Object({ branchId: t.String() }) })
     )
 

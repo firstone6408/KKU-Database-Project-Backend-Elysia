@@ -46,9 +46,9 @@ export abstract class BranchService
     {
         if (userJwt.role === "ADMIN")
         {
-            return await db.branch.findMany();
+            return await db.branch.findMany({ orderBy: { createdAt: "desc" } });
         }
-        return await db.branch.findMany({ where: { id: userJwt.branchId ?? "" } });
+        return await db.branch.findMany({ where: { id: userJwt.branchId ?? "" }, orderBy: { createdAt: "desc" } });
     }
 
     public static async getBranchById(id: string)

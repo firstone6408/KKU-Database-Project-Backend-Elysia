@@ -36,7 +36,7 @@ export const verifyAuth = async (token: string, user: JwtPayload, jwt: Jwt, requ
         message: "ไม่สามารถยีนยันตัวตนได้",
         type: "fail"
       }
-    )
+    );
   }
 
   const existingUser = await kkuDB.kkuPrismaClient.user.findFirst(
