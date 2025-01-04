@@ -53,7 +53,7 @@ export abstract class BranchService
 
     public static async getBranchById(id: string)
     {
-        return await db.branch.findMany({ where: { id: id } });
+        return await db.branch.findUnique({ where: { id: id } });
     }
 
     public static async updateBranch(id: string, options:
@@ -61,6 +61,7 @@ export abstract class BranchService
             name: string;
             phoneNumber: string;
             address: string;
+            branchCode: string;
         }
     )
     {
@@ -85,20 +86,26 @@ export abstract class BranchService
             );
         }
 
-        const branch = await db.branch.findUnique(
+        const branch = await db.branch.findFirst(
             {
-                where: { name: options.name },
-                select: { name: true }
+                where:
+                {
+                    OR: [
+                        { name: options.name },
+                        { branchCode: options.branchCode }
+                    ]
+                },
+                select: { branchCode: true, name: true }
             }
         );
 
 
-        if (branch)
+        if (branch && (branch.name !== options.name && branch.branchCode !== options.branchCode))
         {
             throw new HttpError(
                 {
                     statusCode: 400,
-                    message: `สาขาชื่อ ${branch.name} ถูกสร้างแล้วในระบบ`,
+                    message: `สาขาชื่อ ${branch.name} หรือรหัส ${branch.branchCode} ถูกสร้างแล้วในระบบ`,
                     type: "fail"
                 }
             );
@@ -111,4 +118,10 @@ export abstract class BranchService
             }
         );
     }
+
+    public static async removeBranchById(id: string)
+    {
+        return await db.branch.delete({ where: { id: id } });
+    }
+
 }

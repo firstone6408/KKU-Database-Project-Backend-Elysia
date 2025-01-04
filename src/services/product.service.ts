@@ -27,7 +27,7 @@ export abstract class ProductService
     public static async createProduct(options:
         {
             description?: string | undefined;
-            image?: string | undefined;
+            image?: File | undefined;
             name: string;
             productCode: string;
             categoryId: string;
@@ -60,10 +60,20 @@ export abstract class ProductService
             );
         }
 
+        const { image, ...restData } = options;
+
+        const data: any = { ...restData };
+
+        if (image)
+        {
+            const pathImage = await new ImageFileHandler(filePathConfig.PRODUCT_IMAGE)
+                .saveFile(image);
+            data.image = pathImage;
+        }
         // create product
         const productCreated = await db.product.create(
             {
-                data: options,
+                data: data,
                 select: { productCode: true, name: true }
             }
         );
@@ -321,6 +331,20 @@ export abstract class ProductService
                                     name: true
                                 }
                             },
+                            Stock:
+                            {
+                                where:
+                                {
+                                    branchId: branchId
+                                },
+                                select:
+                                {
+                                    id: true,
+                                    quantity: true,
+                                    createdAt: true,
+                                    updatedAt: true
+                                }
+                            }
                         }
                     },
                 },

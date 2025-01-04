@@ -33,7 +33,7 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
                             productCode: t.String({ minLength: 2 }),
                             name: t.String({ minLength: 1 }),
                             description: t.Optional(t.String()),
-                            image: t.Optional(t.String()),
+                            image: t.Optional(t.File()),
                             categoryId: t.String()
                         }
                     )

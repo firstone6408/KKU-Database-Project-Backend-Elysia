@@ -31,6 +31,12 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
                 }
             )
 
+            .delete("/:id", ({ params }) => withRequestHandling(async () => 
+            {
+                await BranchService.removeBranchById(params.id);
+                return { payload: { data: null }, message: "ลบสาขาสำเร็จ" }
+            }), { params: t.Object({ id: t.String() }) })
+
 
     )
 
@@ -53,7 +59,8 @@ export const branchController = new Elysia({ prefix: "/branches", tags: ["Branch
                         {
                             name: t.String(),
                             phoneNumber: t.String(),
-                            address: t.String()
+                            address: t.String(),
+                            branchCode: t.String()
                         }
                     )
                 }
