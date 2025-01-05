@@ -151,14 +151,47 @@ export abstract class StockService
 
     public static async listStocksWithStockInHistoryByBranchId(branchId: string)
     {
-        const stocks = await db.stock.findMany(
+        const stocks = await db.stockInHistory.findMany(
             {
-                where: { branchId: branchId },
+                where:
+                {
+                    stock: { branchId: branchId }
+                },
                 include:
                 {
-                    StockInHistory: true,
-                    product: true,
-                }
+                    stock:
+                    {
+                        include:
+                        {
+                            product:
+                            {
+                                include:
+                                {
+                                    category:
+                                    {
+                                        select:
+                                        {
+                                            id: true,
+                                            categoryCode: true,
+                                            name: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    user:
+                    {
+                        select:
+                        {
+                            id: true,
+                            username: true,
+                            email: true,
+                            name: true
+                        }
+                    }
+                },
+                orderBy: { createdAt: "desc" }
             }
         );
 
@@ -167,14 +200,38 @@ export abstract class StockService
 
     public static async listStocksWithStockOutHistoryByBranchId(branchId: string)
     {
-        const stocks = await db.stock.findMany(
+
+        const stocks = await db.stockOutHistory.findMany(
             {
-                where: { branchId: branchId },
+                where:
+                {
+                    stock: { branchId: branchId }
+                },
                 include:
                 {
-                    StockOutHistory: true,
-                    product: true,
-                }
+                    stock:
+                    {
+                        include:
+                        {
+                            product:
+                            {
+                                include:
+                                {
+                                    category:
+                                    {
+                                        select:
+                                        {
+                                            id: true,
+                                            categoryCode: true,
+                                            name: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                orderBy: { createdAt: "desc" }
             }
         );
 

@@ -354,4 +354,41 @@ export abstract class ProductService
 
         return products;
     }
+
+    public static async listUnstockedProductsByBranchId(branchId: string)
+    {
+        const unstockedProducts = await db.product.findMany(
+            {
+                where:
+                {
+                    AND: [
+                        { isDeleted: false },
+                        {
+                            NOT:
+                            {
+                                ProductSaleBranch:
+                                {
+                                    some: { branchId: branchId }
+                                }
+                            }
+                        }
+                    ]
+                },
+                include:
+                {
+                    category:
+                    {
+                        select:
+                        {
+                            id: true,
+                            categoryCode: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        );
+
+        return unstockedProducts;
+    }
 }

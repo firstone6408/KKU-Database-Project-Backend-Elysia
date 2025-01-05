@@ -115,4 +115,14 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
                     params: t.Object({ branchId: t.String() })
                 }
             )
+
+            .get("/branch/:branchId/unstocked-products", ({ params }) => withRequestHandling(async () =>
+            {
+                const products = await ProductService.listUnstockedProductsByBranchId(params.branchId);
+                return { payload: { data: products } }
+            }),
+                {
+                    params: t.Object({ branchId: t.String() })
+                }
+            )
     )
