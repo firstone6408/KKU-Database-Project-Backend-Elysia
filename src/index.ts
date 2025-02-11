@@ -111,7 +111,7 @@ const app = new Elysia()
 
 
 //
-// Connect Database
+// Test Connect Database
 //
 const db = kkuDB;
 

@@ -37,6 +37,22 @@ enum OrderStatus {
     REFUNDED
 }
 
+enum DeliveryType {
+    STANDARD
+    EXPRESS
+}
+
+enum DeliveryStatus {
+    PENDING
+    DELIVERED
+    CANCELED
+}
+
+enum ProductUnit {
+    METER
+    PIECE
+}
+
 model Branch {
     id          String   @id @default(uuid())
     branchCode  String   @unique
@@ -73,6 +89,7 @@ model User {
     Customer       Customer[]
     StockInHistory StockInHistory[]
     Order          Order[]
+    Delivery       Delivery[]
 }
 
 model CustomerGroup {
@@ -113,22 +130,27 @@ model Category {
 }
 
 model Product {
-    id          String    @id @default(uuid())
-    productCode String    @unique
-    name        String    @unique
+    id          String      @id @default(uuid())
+    barcode     String      @unique
+    productCode String      @unique
+    name        String
+    model       String?
+    size        String?
     description String?
     image       String?
-    isDeleted   Boolean   @default(false)
+    isDeleted   Boolean     @default(false)
     deletedAt   DateTime?
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    unit        ProductUnit @default(PIECE)
 
     categoryId String
     category   Category @relation(fields: [categoryId], references: [id])
 
     Stock             Stock[]
     ProductSaleBranch ProductSaleBranch[]
-    OrderItem         OrderItem[]
+    StockInItem       StockInItem[]
+    StockOutHistory   StockOutHistory[]
 }
 
 model Stock {
@@ -149,18 +171,31 @@ model Stock {
 }
 
 model StockInHistory {
-    id        String      @id @default(uuid())
-    refCode   String      @unique
+    id          String      @id @default(uuid())
+    refCode     String      @unique
+    distributor String
+    totalPrice  Float
+    type        StockInType
+    note        String?
+    createdAt   DateTime    @default(now())
+
+    stockId     String
+    stock       Stock         @relation(fields: [stockId], references: [id])
+    userId      String
+    user        User          @relation(fields: [userId], references: [id])
+    StockInItem StockInItem[]
+}
+
+model StockInItem {
+    stockInHistoryId String
+    stockInHistory   StockInHistory @relation(fields: [stockInHistoryId], references: [id])
+    productId        String
+    product          Product        @relation(fields: [productId], references: [id])
+
     costPrice Float
     quantity  Int
-    type      StockInType
-    note      String?
-    createdAt DateTime    @default(now())
 
-    stockId String
-    stock   Stock  @relation(fields: [stockId], references: [id])
-    userId  String
-    user    User   @relation(fields: [userId], references: [id])
+    @@unique([stockInHistoryId, productId])
 }
 
 model StockOutHistory {
@@ -168,10 +203,15 @@ model StockOutHistory {
     quantity  Int
     type      StockOutType
     note      String?
+    sellPrice Float
     createdAt DateTime     @default(now())
 
-    stockId String
-    stock   Stock  @relation(fields: [stockId], references: [id])
+    productId String
+    product   Product @relation(fields: [productId], references: [id])
+    orderId   String
+    order     Order   @relation(fields: [orderId], references: [id])
+    stockId   String
+    stock     Stock   @relation(fields: [stockId], references: [id])
 }
 
 model ProductSaleBranch {
@@ -189,37 +229,25 @@ model ProductSaleBranch {
 
 model Order {
     id         String      @id @default(uuid())
+    orderCode  String
     totalPrice Float?
     status     OrderStatus @default(PENDING)
     note       String?
     createdAt  DateTime    @default(now())
     updatedAt  DateTime    @updatedAt
 
-    paymentOrderId String?
-    paymentOrder   PaymentOrder? @relation(fields: [paymentOrderId], references: [id])
-    customerId     String
-    customer       Customer      @relation(fields: [customerId], references: [id])
-    userId         String
-    user           User          @relation(fields: [userId], references: [id])
-    branchId       String
-    branch         Branch        @relation(fields: [branchId], references: [id])
+    customerId String
+    customer   Customer @relation(fields: [customerId], references: [id])
+    userId     String
+    user       User     @relation(fields: [userId], references: [id])
+    branchId   String
+    branch     Branch   @relation(fields: [branchId], references: [id])
 
-    OrderItem OrderItem[]
+    StockOutHistory StockOutHistory[]
+    Delivery        Delivery?
+    PaymentOrder    PaymentOrder?
 
-    @@unique([customerId, userId, branchId])
-}
-
-model OrderItem {
-    orderId   String
-    order     Order    @relation(fields: [orderId], references: [id])
-    sellPrice Float
-    quantity  Int
-    createdAt DateTime @default(now())
-
-    productId String
-    product   Product @relation(fields: [productId], references: [id])
-
-    @@unique([orderId, productId])
+    @@unique([customerId, userId, branchId, orderCode])
 }
 
 model PaymentMethod {
@@ -232,13 +260,34 @@ model PaymentMethod {
 }
 
 model PaymentOrder {
-    id             String   @id @default(uuid())
+    orderId String @unique
+    order   Order  @relation(fields: [orderId], references: [id])
+
     amountRecevied Float
-    change         Float
+    change         Float?
+    deposit        Float?
+    slipImage      String?
+    credit         Int?
     createdAt      DateTime @default(now())
 
     paymentMethodId String
     paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+}
 
-    Order Order[]
+model Delivery {
+    orderId String @unique
+    order   Order  @relation(fields: [orderId], references: [id])
+    userId  String @unique
+    user    User   @relation(fields: [userId], references: [id])
+
+    trackNumber String         @unique
+    address     String
+    distance    Float
+    status      DeliveryStatus @default(PENDING)
+    type        DeliveryType
+    lng         Float
+    lat         Float
+    note        String?
+    createdAt   DateTime       @default(now())
+    updatedAt   DateTime       @updatedAt
 }

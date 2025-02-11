@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import { authPlugin } from "../plugins/auth.plugins";
 import { withRequestHandling } from "../utils/request.utils";
 import { ProductService } from "../services/product.service";
+import { ProductUnit } from "../../prisma/generated/kku_client";
 
 export const productController = new Elysia({ prefix: "/products", tags: ["Products"] })
     .use(authPlugin)
@@ -30,11 +31,15 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
                 {
                     body: t.Object(
                         {
+                            barcode: t.String(),
                             productCode: t.String({ minLength: 2 }),
                             name: t.String({ minLength: 1 }),
+                            model: t.Optional(t.String()),
+                            size: t.Optional(t.String()),
                             description: t.Optional(t.String()),
                             image: t.Optional(t.File()),
-                            categoryId: t.String()
+                            categoryId: t.String(),
+                            unit: t.Enum(ProductUnit)
                         }
                     )
                 }
@@ -55,12 +60,16 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
                     params: t.Object({ id: t.String() }),
                     body: t.Object(
                         {
-                            name: t.Optional(t.String()),
+                            barcode: t.String(),
+                            productCode: t.String({ minLength: 2 }),
+                            name: t.String({ minLength: 1 }),
+                            model: t.Optional(t.String()),
+                            size: t.Optional(t.String()),
                             description: t.Optional(t.String()),
                             image: t.Optional(t.File()),
-                            categoryId: t.Optional(t.String()),
-                            productCode: t.String(),
-                            isDeleted: t.BooleanString()
+                            categoryId: t.String(),
+                            isDeleted: t.BooleanString(),
+                            unit: t.Enum(ProductUnit)
                         }
                     )
                 }
@@ -96,7 +105,7 @@ export const productController = new Elysia({ prefix: "/products", tags: ["Produ
 
 
 
-            .get("/:id", ({ params, store: { userJwt } }) => withRequestHandling(async () =>
+            .get("/:id", ({ params }) => withRequestHandling(async () =>
             {
                 const product = await ProductService.getProductById(params.id);
                 return { payload: { data: product } }

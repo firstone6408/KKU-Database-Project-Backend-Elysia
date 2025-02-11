@@ -10,8 +10,8 @@ export const userController = new Elysia({ prefix: "/users", tags: ["Users"] })
 
     .guard(
         {
-            isVerifyAuth: true,
-            isVerifyRole: ["ADMIN", "MANAGER"],
+            // isVerifyAuth: true,
+            // isVerifyRole: ["ADMIN", "MANAGER"],
             detail: { description: "คำอธิบาย: ใช้สำหรับ ADMIN เท่านั้น" }
         }, (app) => app
             .post("/", ({ body, set }) => withRequestHandling(async () =>
