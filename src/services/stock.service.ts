@@ -60,6 +60,7 @@ export abstract class StockService {
           note: options.note,
           type: "ORDER",
           userId: userId,
+          branchId: options.branchId,
         },
         select: { id: true },
       })
@@ -73,10 +74,10 @@ export abstract class StockService {
       stockInHistoryId: string;
     }[] = [];
 
-    // check product
     for (let i = 0; i < stockInItems.length; i += 1) {
       const item = stockInItems[i];
 
+      // check product
       const existingProduct = await db.product.findUnique({
         where: { id: item.productId },
         select: { id: true },
@@ -129,64 +130,20 @@ export abstract class StockService {
         ).id;
       }
 
-      newStockInItems.push({ ...item, stockId, stockInHistoryId });
+      newStockInItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        costPrice: item.costPrice,
+        stockId: stockId,
+        stockInHistoryId: stockInHistoryId,
+      });
     }
 
     // create stock in history items
-    const payload = { ...newStockInItems, stockInHistoryId };
-    await db.stockInItem.createMany({
-      data: payload,
-    });
+    await db.stockInItem.createMany({ data: newStockInItems });
+
+    //return newStockInItems;
   }
-
-  // public static async listStocksWithStockInHistoryByBranchId(branchId: string)
-  // {
-  //     const stocks = await db.stockInHistory.findMany(
-  //         {
-  //             where:
-  //             {
-  //                 stock: { branchId: branchId }
-  //             },
-  //             include:
-  //             {
-  //                 stock:
-  //                 {
-  //                     include:
-  //                     {
-  //                         product:
-  //                         {
-  //                             include:
-  //                             {
-  //                                 category:
-  //                                 {
-  //                                     select:
-  //                                     {
-  //                                         id: true,
-  //                                         categoryCode: true,
-  //                                         name: true
-  //                                     }
-  //                                 }
-  //                             }
-  //                         }
-  //                     }
-  //                 },
-  //                 user:
-  //                 {
-  //                     select:
-  //                     {
-  //                         id: true,
-  //                         username: true,
-  //                         email: true,
-  //                         name: true
-  //                     }
-  //                 }
-  //             },
-  //             orderBy: { createdAt: "desc" }
-  //         }
-  //     );
-
-  //     return stocks;
-  // }
 
   // public static async listStocksWithStockOutHistoryByBranchId(branchId: string)
   // {
