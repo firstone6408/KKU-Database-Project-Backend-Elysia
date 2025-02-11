@@ -164,8 +164,8 @@ model Stock {
     branchId  String
     branch    Branch  @relation(fields: [branchId], references: [id])
 
-    StockInHistory  StockInHistory[]
     StockOutHistory StockOutHistory[]
+    StockInItem     StockInItem[]
 
     @@unique([productId, branchId]) // เพิ่ม unique composite key ให้ทั้งสอง
 }
@@ -179,8 +179,6 @@ model StockInHistory {
     note        String?
     createdAt   DateTime    @default(now())
 
-    stockId     String
-    stock       Stock         @relation(fields: [stockId], references: [id])
     userId      String
     user        User          @relation(fields: [userId], references: [id])
     StockInItem StockInItem[]
@@ -191,6 +189,8 @@ model StockInItem {
     stockInHistory   StockInHistory @relation(fields: [stockInHistoryId], references: [id])
     productId        String
     product          Product        @relation(fields: [productId], references: [id])
+    stockId          String
+    stock            Stock          @relation(fields: [stockId], references: [id])
 
     costPrice Float
     quantity  Int

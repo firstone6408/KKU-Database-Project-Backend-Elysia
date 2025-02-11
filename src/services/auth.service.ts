@@ -7,16 +7,14 @@ import { comparePassword } from "../utils/crypto.utils";
 
 const db = kkuDB.kkuPrismaClient;
 
-export abstract class AuthService
-{
+export abstract class AuthService {
   public static async login(
     options: {
       username: string;
       password: string;
     },
     jwt: Jwt
-  )
-  {
+  ) {
     const userExsting = await db.user.findUnique({
       where: { username: options.username },
       select: {
@@ -32,8 +30,7 @@ export abstract class AuthService
       },
     });
 
-    if (!userExsting)
-    {
+    if (!userExsting) {
       throw new HttpError({
         statusCode: 400,
         message: "ไม่พบผู้ใช้บัญชีนี้",
@@ -46,8 +43,7 @@ export abstract class AuthService
       userExsting.password
     );
 
-    if (!isMatch)
-    {
+    if (!isMatch) {
       throw new HttpError({
         statusCode: "Forbidden",
         message: "รหัสผ่านไม่ถูกต้อง",
@@ -81,8 +77,7 @@ export abstract class AuthService
   public static async loginWithProvider(
     options: { email: string },
     jwt: Jwt
-  )
-  {
+  ) {
     const userExsting = await db.user.findUnique({
       where: { email: options.email },
       select: {
@@ -98,8 +93,7 @@ export abstract class AuthService
       },
     });
 
-    if (!userExsting)
-    {
+    if (!userExsting) {
       throw new HttpError({
         statusCode: 400,
         message: "ไม่พบผู้ใช้บัญชีนี้",
@@ -130,8 +124,7 @@ export abstract class AuthService
     return { token, user: userWithOutPassword };
   }
 
-  public static async currentUser(user: JwtPayload)
-  {
+  public static async currentUser(user: JwtPayload) {
     return await db.user.findFirst({
       where: {
         OR: [{ username: user.username }, { email: user.email }],
