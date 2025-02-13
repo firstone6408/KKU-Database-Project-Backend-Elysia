@@ -4,6 +4,7 @@ import Elysia, { t } from "elysia";
 import { authPlugin } from "../plugins/auth.plugins";
 import { withRequestHandling } from "../utils/request.utils";
 import { OrderService } from "../services/order.service";
+import { OrderStatus } from "../../prisma/generated/kku_client";
 
 export const orderController = new Elysia({
   prefix: "/orders",
@@ -32,6 +33,7 @@ export const orderController = new Elysia({
             body: t.Object({
               customerId: t.String(),
               branchId: t.String(),
+              orderCode: t.String(),
             }),
           }
         )
@@ -56,10 +58,16 @@ export const orderController = new Elysia({
                   productId: t.String(),
                 })
               ),
+              orderStatus: t.Enum(OrderStatus),
+              note: t.Optional(t.String()),
+              paymentMethodId: t.String(),
+
               amountReceived: t.Number(),
               change: t.Number(),
-              paymentMethodId: t.String(),
-              note: t.Optional(t.String()),
+              slipImage: t.Optional(t.File()),
+              credit: t.Number(),
+              deposit: t.Number(),
+              discount: t.Number(),
             }),
           }
         )

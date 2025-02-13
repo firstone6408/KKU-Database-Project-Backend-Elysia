@@ -1,5 +1,6 @@
 /** @format */
 
+import { OrderStatus } from "../../prisma/generated/kku_client";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
 
@@ -12,8 +13,10 @@ export abstract class OrderService {
     options: {
       customerId: string;
       branchId: string;
+      orderCode: string;
     }
   ) {
+    // check branch
     const existingBranch = await db.branch.findUnique({
       where: { id: options.branchId },
       select: { id: true },
@@ -27,6 +30,7 @@ export abstract class OrderService {
       });
     }
 
+    // check customer
     const existingCustomerInBranch = await db.customer.findFirst({
       where: {
         AND: [{ id: options.customerId }, { branchId: options.branchId }],
@@ -42,12 +46,14 @@ export abstract class OrderService {
       });
     }
 
+    // chec order
     const existingOrder = await db.order.findUnique({
       where: {
-        customerId_userId_branchId: {
+        customerId_userId_branchId_orderCode: {
           customerId: options.customerId,
           userId: userId,
           branchId: options.branchId,
+          orderCode: options.orderCode,
         },
       },
       select: { id: true },
@@ -61,9 +67,11 @@ export abstract class OrderService {
       });
     }
 
+    // if not create
     await db.order.create({
       data: {
         customerId: options.customerId,
+        orderCode: options.orderCode,
         userId: userId,
         branchId: options.branchId,
         status: "PENDING",
@@ -72,18 +80,23 @@ export abstract class OrderService {
   }
 
   public static async confirmOrder(options: {
-    note?: string | undefined;
+    note?: string;
+    slipImage?: File;
     orderId: string;
     orderItems: {
       sellPrice: number;
       quantity: number;
       productId: string;
     }[];
+    orderStatus: OrderStatus;
+    paymentMethodId: string;
     amountReceived: number;
     change: number;
-    paymentMethodId: string;
+    credit: number;
+    deposit: number;
+    discount: number;
   }) {
-    // check
+    // check order
     const existingOrder = await db.order.findFirst({
       where: {
         AND: [{ id: options.orderId }, { status: "PENDING" }],
@@ -99,6 +112,7 @@ export abstract class OrderService {
       });
     }
 
+    // check payment method
     const existingPaymentMethod = await db.paymentMethod.findUnique({
       where: { id: options.paymentMethodId },
       select: { id: true },
@@ -112,7 +126,14 @@ export abstract class OrderService {
       });
     }
 
+    // validate and check quantity order items
     const orderItems = options.orderItems;
+    // calculate totalPrice
+    // const totalPrice = orderItems.reduce(
+    //   (sum, orderItem) => sum + orderItem.sellPrice * orderItem.quantity,
+    //   0
+    // );
+    let totalPrice = 0;
 
     for (let i = 0; i < orderItems.length; i += 1) {
       const orderItem = orderItems[i];
@@ -120,6 +141,7 @@ export abstract class OrderService {
         where: { productId: orderItem.productId },
         select: {
           quantity: true,
+          productId: true,
           product: { select: { name: true } },
         },
       });
@@ -127,35 +149,101 @@ export abstract class OrderService {
       if (!stock || stock.quantity < orderItem.quantity) {
         throw new HttpError({
           statusCode: 400,
-          message: `สินค้า ${stock?.product.name} มีจำนวน ในStock ไม่เพียงพอ`,
+          message: `บางสินค้า มีจำนวน ในStock ไม่เพียงพอ`,
           type: "fail",
         });
       }
+
+      const productSaleBranch = await db.productSaleBranch.findUnique({
+        where: {
+          productId_branchId: {
+            productId: stock.productId,
+            branchId: existingOrder.branchId,
+          },
+        },
+        select: { sellPrice: true },
+      });
+
+      if (!productSaleBranch) {
+        throw new HttpError({
+          statusCode: 400,
+          message: `สินค้า ${stock?.product.name} ยังไม่ได้กำหนดราคา`,
+          type: "fail",
+        });
+      }
+
+      // calculate totalPrice
+      totalPrice += orderItem.sellPrice * orderItem.quantity;
+    }
+
+    // check order status
+    let paymentCondition: any = {
+      orderId: options.orderId,
+      paymentMethodId: options.paymentMethodId,
+    };
+
+    switch (options.orderStatus) {
+      case "CREDIT_USED":
+        if (options.credit <= 0) {
+          throw new HttpError({
+            message: "จำนวนวัน Credit ต้องมากกว่า 0",
+            statusCode: 400,
+            type: "fail",
+          });
+        }
+        paymentCondition.credit = options.credit;
+        break;
+      case "DEPOSITED":
+        if (options.deposit <= 0) {
+          throw new HttpError({
+            message: "จำนวนเงินมัดจำ ต้องมากกว่า 0",
+            statusCode: 400,
+            type: "fail",
+          });
+        }
+        paymentCondition.deposit = options.deposit;
+        break;
+      case "COMPLETED":
+        if (options.amountReceived <= 0) {
+          throw new HttpError({
+            message: "จำนวนเงินที่จ่าย ต้องมากกว่า 0",
+            statusCode: 400,
+            type: "fail",
+          });
+        }
+        paymentCondition.amountReceived = options.amountReceived;
+        paymentCondition.change = options.change;
+        paymentCondition.discount = options.discount;
+        break;
+
+      default:
+        throw new HttpError({
+          message: "การชำระเงินผิดพลาด",
+          statusCode: 400,
+          type: "fail",
+        });
     }
 
     // create payment order
     const paymentOrder = await db.paymentOrder.create({
-      data: {
-        amountRecevied: options.amountReceived,
-        change: options.change,
-        paymentMethodId: options.paymentMethodId,
-      },
-      select: { id: true },
+      data: paymentCondition,
+      select: { paymentMethodId: true },
     });
 
-    // calculate totalPrice
-    const totalPrice = orderItems.reduce(
-      (sum, orderItem) => sum + orderItem.sellPrice * orderItem.quantity,
-      0
-    );
+    if (!paymentOrder) {
+      throw new HttpError({
+        message: "ไม่พบวิธีการชำระเงิน",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
 
     // confirm/update order
     await db.order.update({
       where: { id: options.orderId },
       data: {
         totalPrice: totalPrice,
-        paymentOrderId: paymentOrder.id,
-        status: "COMPLETED",
+        status: options.orderStatus,
       },
       select: { id: true },
     });
@@ -180,19 +268,13 @@ export abstract class OrderService {
         data: {
           quantity: orderItem.quantity,
           type: "SALE",
+          orderId: options.orderId,
+          productId: orderItem.productId,
           stockId: stockUpdate.id,
+          sellPrice: orderItem.sellPrice,
         },
       });
     }
-
-    const createOrderItems = orderItems.map((orderItem) => ({
-      orderId: options.orderId,
-      sellPrice: orderItem.sellPrice,
-      quantity: orderItem.quantity,
-      productId: orderItem.productId,
-    }));
-
-    await db.orderItem.createMany({ data: createOrderItems });
   }
 
   public static async cancelOrder(id: string) {
@@ -200,7 +282,7 @@ export abstract class OrderService {
       where: {
         AND: [{ id: id }, { status: "PENDING" }],
       },
-      select: { id: true, OrderItem: true },
+      select: { id: true },
     });
 
     if (!existingOrder) {
@@ -221,39 +303,34 @@ export abstract class OrderService {
     const orders = await db.order.findMany({
       where: { userId: userId },
       include: {
-        paymentOrder: {
+        customer: true,
+        PaymentOrder: true,
+        user: {
           select: {
             id: true,
-            amountRecevied: true,
-            change: true,
+            username: true,
+            email: true,
+            name: true,
+          },
+        },
+        StockOutHistory: {
+          select: {
+            quantity: true,
+            type: true,
+            note: true,
+            sellPrice: true,
             createdAt: true,
-            paymentMethod: {
-              select: {
-                id: true,
-                name: true,
+            product: {
+              include: {
+                category: {
+                  select: {
+                    id: true,
+                    categoryCode: true,
+                    name: true,
+                  },
+                },
               },
             },
-          },
-        },
-        customer: {
-          select: {
-            id: true,
-            customerCode: true,
-            name: true,
-            phoneNumber: true,
-            address: true,
-            customerGroup: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        branch: {
-          select: {
-            id: true,
-            name: true,
           },
         },
       },

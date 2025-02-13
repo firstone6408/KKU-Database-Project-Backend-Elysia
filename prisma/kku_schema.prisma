@@ -31,10 +31,12 @@ enum StockOutType {
 }
 
 enum OrderStatus {
-    PENDING
-    COMPLETED
-    CANCELLED
-    REFUNDED
+    PENDING // รอดำเนินการ
+    COMPLETED // สำเร็จ
+    DEPOSITED // จ่ายมัดจำแล้ว แต่ยังไม่จ่ายครบ
+    CANCELLED // ยกเลิก
+    REFUNDED // คืนของ
+    CREDIT_USED // ใช้เครดิตในการชำระเงิน (เครดิตของร้านหรือยอดค้าง)
 }
 
 enum DeliveryType {
@@ -43,9 +45,11 @@ enum DeliveryType {
 }
 
 enum DeliveryStatus {
-    PENDING
-    DELIVERED
-    CANCELED
+    PENDING // รอดำเนินการจัดส่ง (ยังไม่เริ่มจัดส่ง)
+    IN_TRANSIT // อยู่ระหว่างการจัดส่ง (กำลังเดินทาง)
+    DELIVERED // ส่งถึงลูกค้าแล้ว
+    CANCELED // ยกเลิกการจัดส่ง
+    DELAYED // การจัดส่งล่าช้า
 }
 
 enum ProductUnit {
@@ -266,11 +270,12 @@ model PaymentOrder {
     orderId String @unique
     order   Order  @relation(fields: [orderId], references: [id])
 
-    amountRecevied Float
+    amountRecevied Float?
     change         Float?
     deposit        Float?
     slipImage      String?
     credit         Int?
+    discount       Float?
     createdAt      DateTime @default(now())
 
     paymentMethodId String

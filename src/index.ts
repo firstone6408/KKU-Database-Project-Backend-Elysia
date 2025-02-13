@@ -21,6 +21,7 @@ import { productSaleBranchController } from "./controllers/product-sale-branch.c
 import { paymentMethodController } from "./controllers/payment-method.controller";
 import { orderController } from "./controllers/order.controller";
 import { stockHistoryController } from "./controllers/stock-history.controller";
+import { deliveryController } from "./controllers/delivery.controller";
 
 const app = new Elysia()
   //
@@ -105,8 +106,12 @@ const app = new Elysia()
             description:
               "จุดเชื่อมต่อที่เกี่ยวกับการจัดการคำสั่งซื้อ เช่น การสร้าง, อัปเดต หรือ ยกเลิกคำสั่งซื้อ",
           },
-          { name: "CustomerGroups", description: "" },
-          { name: "Customers", description: "" },
+          {
+            name: "Deliveries",
+            description: "การขนส่ง",
+          },
+          { name: "CustomerGroups", description: "กลุ่มลูกค้า" },
+          { name: "Customers", description: "ลูกค้า" },
         ],
       },
     })
@@ -132,6 +137,7 @@ const app = new Elysia()
       .use(paymentMethodController)
       .use(orderController)
       .use(stockHistoryController)
+      .use(deliveryController)
   )
 
   // Start on port
