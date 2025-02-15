@@ -226,47 +226,44 @@ export abstract class ProductService {
   }
 
   public static async listProductsByBranchId(branchId: string) {
-    const products = await db.productSaleBranch.findMany({
+    const products = await db.product.findMany({
       where: {
-        AND: [
-          { branchId: branchId },
-          {
-            product: {
-              isDeleted: false,
-            },
-          },
-        ],
+        isDeleted: false,
       },
-      select: {
-        sellPrice: true,
-        createdAt: true,
-        updatedAt: true,
-        product: {
-          include: {
-            category: {
-              select: {
-                id: true,
-                categoryCode: true,
-                name: true,
-              },
-            },
-            Stock: {
-              where: {
-                branchId: branchId,
-              },
-              select: {
-                id: true,
-                quantity: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+      include: {
+        category: {
+          select: {
+            id: true,
+            categoryCode: true,
+            name: true,
+          },
+        },
+        Stock: {
+          where: {
+            branchId: branchId,
+          },
+          select: {
+            id: true,
+            quantity: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        ProductSaleBranch: {
+          where: {
+            branchId: branchId,
+          },
+          select: {
+            sellPrice: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        productCode: "desc",
+      },
     });
-
     return products;
   }
 

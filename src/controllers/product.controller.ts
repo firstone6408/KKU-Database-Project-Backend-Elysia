@@ -91,13 +91,6 @@ export const productController = new Elysia({
             }),
           { params: t.Object({ id: t.String() }) }
         )
-
-        .get("/", () =>
-          withRequestHandling(async () => {
-            const products = await ProductService.listProducts();
-            return { payload: { data: products } };
-          })
-        )
   )
 
   .guard(
@@ -107,6 +100,12 @@ export const productController = new Elysia({
     },
     (app) =>
       app
+        .get("/", () =>
+          withRequestHandling(async () => {
+            const products = await ProductService.listProducts();
+            return { payload: { data: products } };
+          })
+        )
 
         .get(
           "/:id",

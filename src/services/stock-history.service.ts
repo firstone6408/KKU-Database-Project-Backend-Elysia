@@ -48,6 +48,9 @@ export abstract class StockHistoryService {
           },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     return stockInHistories;
