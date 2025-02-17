@@ -100,6 +100,28 @@ export abstract class CustomerService {
     });
   }
 
+  public static async listCustomersById(customerId: string) {
+    return await db.customer.findUnique({
+      where: { id: customerId },
+      include: {
+        customerGroup: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
   public static async listCustomersByBranchIdAndUserId(
     branchId: string,
     userId: string

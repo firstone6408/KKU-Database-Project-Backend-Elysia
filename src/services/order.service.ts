@@ -90,11 +90,11 @@ export abstract class OrderService {
     }[];
     orderStatus: OrderStatus;
     paymentMethodId: string;
-    amountReceived: number;
-    change: number;
-    credit: number;
-    deposit: number;
-    discount: number;
+    amountReceived?: number;
+    change?: number;
+    credit?: number;
+    deposit?: number;
+    discount?: number;
   }) {
     // check order
     const existingOrder = await db.order.findFirst({
@@ -184,7 +184,7 @@ export abstract class OrderService {
 
     switch (options.orderStatus) {
       case "CREDIT_USED":
-        if (options.credit <= 0) {
+        if (options.credit && options.credit <= 0) {
           throw new HttpError({
             message: "จำนวนวัน Credit ต้องมากกว่า 0",
             statusCode: 400,
@@ -194,7 +194,7 @@ export abstract class OrderService {
         paymentCondition.credit = options.credit;
         break;
       case "DEPOSITED":
-        if (options.deposit <= 0) {
+        if (options.deposit && options.deposit <= 0) {
           throw new HttpError({
             message: "จำนวนเงินมัดจำ ต้องมากกว่า 0",
             statusCode: 400,
@@ -204,7 +204,7 @@ export abstract class OrderService {
         paymentCondition.deposit = options.deposit;
         break;
       case "COMPLETED":
-        if (options.amountReceived <= 0) {
+        if (options.amountReceived && options.amountReceived <= 0) {
           throw new HttpError({
             message: "จำนวนเงินที่จ่าย ต้องมากกว่า 0",
             statusCode: 400,

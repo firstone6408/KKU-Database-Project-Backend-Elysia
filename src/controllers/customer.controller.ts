@@ -100,4 +100,20 @@ export const customerController = new Elysia({
             }),
           }
         )
+
+        .get(
+          "/:id",
+          ({ params }) =>
+            withRequestHandling(async () => {
+              const customers = await CustomerService.listCustomersById(
+                params.id
+              );
+              return { payload: { data: customers } };
+            }),
+          {
+            params: t.Object({
+              id: t.String(),
+            }),
+          }
+        )
   );

@@ -62,12 +62,12 @@ export const orderController = new Elysia({
               note: t.Optional(t.String()),
               paymentMethodId: t.String(),
 
-              amountReceived: t.Number(),
-              change: t.Number(),
+              amountReceived: t.Optional(t.Number()),
+              change: t.Optional(t.Number()),
               slipImage: t.Optional(t.File()),
-              credit: t.Number(),
-              deposit: t.Number(),
-              discount: t.Number(),
+              credit: t.Optional(t.Number()),
+              deposit: t.Optional(t.Number()),
+              discount: t.Optional(t.Number()),
             }),
           }
         )

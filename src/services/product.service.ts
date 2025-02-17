@@ -60,7 +60,7 @@ export abstract class ProductService {
     if (image) {
       const pathImage = await new ImageFileHandler(
         filePathConfig.PRODUCT_IMAGE
-      ).saveFile(image);
+      ).uploadFile(image);
       data.image = pathImage;
     }
     // create product
@@ -139,12 +139,12 @@ export abstract class ProductService {
         filePathConfig.PRODUCT_IMAGE
       );
       if (existingProduct.image) {
-        pathImage = await imageHandler.updateFile(
+        pathImage = await imageHandler.replaceFile(
           existingProduct.image,
           imageUpload
         );
       } else {
-        pathImage = await imageHandler.saveFile(imageUpload);
+        pathImage = await imageHandler.uploadFile(imageUpload);
       }
       data.image = pathImage;
     }
@@ -229,6 +229,58 @@ export abstract class ProductService {
     const products = await db.product.findMany({
       where: {
         isDeleted: false,
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            categoryCode: true,
+            name: true,
+          },
+        },
+        Stock: {
+          where: {
+            branchId: branchId,
+          },
+          select: {
+            id: true,
+            quantity: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        ProductSaleBranch: {
+          where: {
+            branchId: branchId,
+          },
+          select: {
+            sellPrice: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+      orderBy: {
+        productCode: "desc",
+      },
+    });
+    return products;
+  }
+
+  public static async listProductsAvailableByBranchId(branchId: string) {
+    const products = await db.product.findMany({
+      where: {
+        isDeleted: false,
+        Stock: {
+          some: {
+            branchId: branchId,
+          },
+        },
+        ProductSaleBranch: {
+          some: {
+            branchId: branchId,
+          },
+        },
       },
       include: {
         category: {

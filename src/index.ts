@@ -33,9 +33,12 @@ const app = new Elysia()
     })
   )
   .use(staticPlugin())
-  .onAfterResponse(({ set, headers }) => {
+  .onAfterResponse(({ set, headers, path }) => {
+    // console.log("set:", set);
+    // console.log("headers:", headers);
+    //console.log(path);
     console.log(
-      ` - Request: [${set.headers["access-control-allow-methods"]}] "${headers["referer"]}" | ${set.status} | Platform: ${headers["sec-ch-ua-platform"]}`
+      ` - Request: [${set.headers["access-control-allow-methods"]}] "http://${headers["host"]}${path}" From "${headers["referer"]}" | Status: ${set.status} | Platform: ${headers["sec-ch-ua-platform"]}`
     );
   })
 
