@@ -43,7 +43,7 @@ export const orderController = new Elysia({
           ({ body }) =>
             withRequestHandling(async () => {
               await OrderService.confirmOrder(body);
-              // console.log("body:", body);
+              //   console.log("body:", body);
               return {
                 payload: { data: null },
               };
@@ -51,24 +51,23 @@ export const orderController = new Elysia({
           {
             body: t.Object({
               orderId: t.String(),
-              orderItems: t.Array(
+              orderItems: t.ArrayString(
                 t.Object({
-                  sellPrice: t.Number(),
-                  quantity: t.Number(),
+                  sellPrice: t.Numeric(),
+                  quantity: t.Numeric(),
                   productId: t.String(),
                 })
               ),
-              //    orderStatus: t.Enum(OrderStatus),
               orderType: t.Enum(OrderType),
               note: t.Optional(t.String()),
               paymentMethodId: t.String(),
 
-              amountRecevied: t.Optional(t.Number()),
-              change: t.Optional(t.Number()),
+              amountRecevied: t.Optional(t.Numeric()),
+              change: t.Optional(t.Numeric()),
               slipImage: t.Optional(t.File()),
-              credit: t.Optional(t.Number()),
-              deposit: t.Optional(t.Number()),
-              discount: t.Optional(t.Number()),
+              credit: t.Optional(t.Numeric()),
+              deposit: t.Optional(t.Numeric()),
+              discount: t.Optional(t.Numeric()),
             }),
           }
         )
