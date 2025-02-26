@@ -4,7 +4,7 @@ import Elysia, { t } from "elysia";
 import { authPlugin } from "../plugins/auth.plugins";
 import { withRequestHandling } from "../utils/request.utils";
 import { OrderService } from "../services/order.service";
-import { OrderStatus } from "../../prisma/generated/kku_client";
+import { OrderStatus, OrderType } from "../../prisma/generated/kku_client";
 
 export const orderController = new Elysia({
   prefix: "/orders",
@@ -43,9 +43,9 @@ export const orderController = new Elysia({
           ({ body }) =>
             withRequestHandling(async () => {
               await OrderService.confirmOrder(body);
+              // console.log("body:", body);
               return {
                 payload: { data: null },
-                message: "ปิดรายการเรียบร้อย",
               };
             }),
           {
@@ -58,11 +58,12 @@ export const orderController = new Elysia({
                   productId: t.String(),
                 })
               ),
-              orderStatus: t.Enum(OrderStatus),
+              //    orderStatus: t.Enum(OrderStatus),
+              orderType: t.Enum(OrderType),
               note: t.Optional(t.String()),
               paymentMethodId: t.String(),
 
-              amountReceived: t.Optional(t.Number()),
+              amountRecevied: t.Optional(t.Number()),
               change: t.Optional(t.Number()),
               slipImage: t.Optional(t.File()),
               credit: t.Optional(t.Number()),
@@ -99,5 +100,17 @@ export const orderController = new Elysia({
           {
             params: t.Object({ userId: t.String() }),
           }
+        )
+
+        .get(
+          "/branch/:branchId",
+          ({ params }) =>
+            withRequestHandling(async () => {
+              const orders = await OrderService.listOrdersByBranchId(
+                params.branchId
+              );
+              return { payload: { data: orders } };
+            }),
+          { params: t.Object({ branchId: t.String() }) }
         )
   );

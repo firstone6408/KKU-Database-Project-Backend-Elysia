@@ -1,8 +1,10 @@
 /** @format */
 
-import { OrderStatus } from "../../prisma/generated/kku_client";
+import { OrderStatus, OrderType } from "../../prisma/generated/kku_client";
+import { filePathConfig } from "../config/file-path.config";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
+import { ImageFileHandler } from "../utils/file.utils";
 
 const db = kkuDB.kkuPrismaClient;
 
@@ -88,9 +90,10 @@ export abstract class OrderService {
       quantity: number;
       productId: string;
     }[];
-    orderStatus: OrderStatus;
+    //  orderStatus: OrderStatus;
+    orderType: OrderType;
     paymentMethodId: string;
-    amountReceived?: number;
+    amountRecevied?: number;
     change?: number;
     credit?: number;
     deposit?: number;
@@ -128,13 +131,7 @@ export abstract class OrderService {
 
     // validate and check quantity order items
     const orderItems = options.orderItems;
-    // calculate totalPrice
-    // const totalPrice = orderItems.reduce(
-    //   (sum, orderItem) => sum + orderItem.sellPrice * orderItem.quantity,
-    //   0
-    // );
     let totalPrice = 0;
-
     for (let i = 0; i < orderItems.length; i += 1) {
       const orderItem = orderItems[i];
       const stock = await db.stock.findFirst({
@@ -181,8 +178,9 @@ export abstract class OrderService {
       orderId: options.orderId,
       paymentMethodId: options.paymentMethodId,
     };
+    let orderStatus: OrderStatus = "UNPAID";
 
-    switch (options.orderStatus) {
+    switch (options.orderType) {
       case "CREDIT_USED":
         if (options.credit && options.credit <= 0) {
           throw new HttpError({
@@ -203,17 +201,37 @@ export abstract class OrderService {
         }
         paymentCondition.deposit = options.deposit;
         break;
-      case "COMPLETED":
-        if (options.amountReceived && options.amountReceived <= 0) {
+      case "DEPOSITED_CREDIT_USED":
+        if (options.credit && options.credit <= 0) {
+          throw new HttpError({
+            message: "จำนวนวัน Credit ต้องมากกว่า 0",
+            statusCode: 400,
+            type: "fail",
+          });
+        }
+        if (options.deposit && options.deposit <= 0) {
+          throw new HttpError({
+            message: "จำนวนเงินมัดจำ ต้องมากกว่า 0",
+            statusCode: 400,
+            type: "fail",
+          });
+        }
+        paymentCondition.credit = options.credit;
+        paymentCondition.deposit = options.deposit;
+        break;
+      case "FULL_PAYMENT":
+        if (options.amountRecevied && options.amountRecevied <= 0) {
           throw new HttpError({
             message: "จำนวนเงินที่จ่าย ต้องมากกว่า 0",
             statusCode: 400,
             type: "fail",
           });
         }
-        paymentCondition.amountReceived = options.amountReceived;
+        paymentCondition.amountRecevied = options.amountRecevied;
         paymentCondition.change = options.change;
         paymentCondition.discount = options.discount;
+        orderStatus = "COMPLETED";
+        paymentCondition.paidAt = new Date();
         break;
 
       default:
@@ -224,26 +242,25 @@ export abstract class OrderService {
         });
     }
 
+    if (options.slipImage) {
+      const pathFile = await new ImageFileHandler(
+        filePathConfig.SLIP_IMAGE
+      ).uploadFile(options.slipImage);
+      paymentCondition.slipImage = pathFile;
+    }
     // create payment order
-    const paymentOrder = await db.paymentOrder.create({
+    await db.paymentOrder.create({
       data: paymentCondition,
       select: { paymentMethodId: true },
     });
-
-    if (!paymentOrder) {
-      throw new HttpError({
-        message: "ไม่พบวิธีการชำระเงิน",
-        statusCode: 404,
-        type: "fail",
-      });
-    }
 
     // confirm/update order
     await db.order.update({
       where: { id: options.orderId },
       data: {
         totalPrice: totalPrice,
-        status: options.orderStatus,
+        status: orderStatus,
+        type: options.orderType,
       },
       select: { id: true },
     });
@@ -303,8 +320,15 @@ export abstract class OrderService {
     const orders = await db.order.findMany({
       where: { userId: userId },
       include: {
-        customer: true,
-        PaymentOrder: true,
+        StockOutHistory: {
+          include: {
+            product: {
+              include: {
+                category: true,
+              },
+            },
+          },
+        },
         user: {
           select: {
             id: true,
@@ -313,24 +337,67 @@ export abstract class OrderService {
             name: true,
           },
         },
+        customer: {
+          include: {
+            customerGroup: true,
+          },
+        },
+        PaymentOrder: {
+          include: {
+            paymentMethod: true,
+          },
+        },
+      },
+    });
+
+    return orders;
+  }
+
+  public static async listOrdersByBranchId(branchId: string) {
+    // check branch
+    const existingBranch = await db.branch.findUnique({
+      where: { id: branchId },
+      select: { id: true },
+    });
+
+    if (!existingBranch) {
+      throw new HttpError({
+        message: "ไม่พบสาขาที่ระบุ",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
+
+    const orders = await db.order.findMany({
+      where: {
+        branchId: branchId,
+      },
+      include: {
         StockOutHistory: {
-          select: {
-            quantity: true,
-            type: true,
-            note: true,
-            sellPrice: true,
-            createdAt: true,
+          include: {
             product: {
               include: {
-                category: {
-                  select: {
-                    id: true,
-                    categoryCode: true,
-                    name: true,
-                  },
-                },
+                category: true,
               },
             },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            name: true,
+          },
+        },
+        customer: {
+          include: {
+            customerGroup: true,
+          },
+        },
+        PaymentOrder: {
+          include: {
+            paymentMethod: true,
           },
         },
       },

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `delivery` ADD COLUMN `fee` DOUBLE NOT NULL DEFAULT 0;

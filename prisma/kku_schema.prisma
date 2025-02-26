@@ -12,6 +12,7 @@ enum UserRole {
     ADMIN
     MANAGER
     STAFF
+    TRANSPORTER
 }
 
 enum UserStatus {
@@ -33,10 +34,17 @@ enum StockOutType {
 enum OrderStatus {
     PENDING // รอดำเนินการ
     COMPLETED // สำเร็จ
-    DEPOSITED // จ่ายมัดจำแล้ว แต่ยังไม่จ่ายครบ
     CANCELLED // ยกเลิก
     REFUNDED // คืนของ
+    DELIVERING // การจัดส่งกำลังดำเนินการ
+    UNPAID // ค้างชำระ
+}
+
+enum OrderType {
+    FULL_PAYMENT // จ่ายเต็มจำนวน ไม่มีมัดจำ ไม่มีเครดิต
+    DEPOSITED // จ่ายมัดจำแล้ว แต่ยังไม่จ่ายครบ
     CREDIT_USED // ใช้เครดิตในการชำระเงิน (เครดิตของร้านหรือยอดค้าง)
+    DEPOSITED_CREDIT_USED // จ่ายมัดจำ+ใช้เครดิต
 }
 
 enum DeliveryType {
@@ -94,7 +102,7 @@ model User {
     Customer       Customer[]
     StockInHistory StockInHistory[]
     Order          Order[]
-    Delivery       Delivery[]
+    DeliveryDriver DeliveryDriver[]
 }
 
 model CustomerGroup {
@@ -239,6 +247,7 @@ model Order {
     orderCode  String
     totalPrice Float?
     status     OrderStatus @default(PENDING)
+    type       OrderType?
     note       String?
     createdAt  DateTime    @default(now())
     updatedAt  DateTime    @updatedAt
@@ -276,7 +285,8 @@ model PaymentOrder {
     slipImage      String?
     credit         Int?
     discount       Float?
-    createdAt      DateTime @default(now())
+    createdAt      DateTime  @default(now())
+    paidAt         DateTime?
 
     paymentMethodId String
     paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
@@ -285,17 +295,31 @@ model PaymentOrder {
 model Delivery {
     orderId String @unique
     order   Order  @relation(fields: [orderId], references: [id])
-    userId  String @unique
-    user    User   @relation(fields: [userId], references: [id])
 
     trackNumber String         @unique
     address     String
+    fee         Float          @default(0)
     distance    Float
     status      DeliveryStatus @default(PENDING)
     type        DeliveryType
     lng         Float
     lat         Float
     note        String?
-    createdAt   DateTime       @default(now())
+    sendDate    DateTime
+    completedAt DateTime?
     updatedAt   DateTime       @updatedAt
+
+    DeliveryDriver DeliveryDriver[]
+}
+
+model DeliveryDriver {
+    deliveryId String
+    userId     String
+
+    delivery Delivery @relation(fields: [deliveryId], references: [orderId], onDelete: Cascade)
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    assignedAt DateTime @default(now())
+
+    @@id([deliveryId, userId])
 }
