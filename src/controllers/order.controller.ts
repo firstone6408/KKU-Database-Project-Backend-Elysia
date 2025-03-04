@@ -72,6 +72,26 @@ export const orderController = new Elysia({
           }
         )
 
+        .put(
+          "/pay",
+          ({ body }) =>
+            withRequestHandling(async () => {
+              await OrderService.payOrder(body.orderId, {
+                slipImage: body.slipImage,
+              });
+              //   console.log("body:", body);
+              return {
+                payload: { data: null },
+              };
+            }),
+          {
+            body: t.Object({
+              orderId: t.String(),
+              slipImage: t.File(),
+            }),
+          }
+        )
+
         .delete(
           "/:id/cancel",
           ({ params }) =>

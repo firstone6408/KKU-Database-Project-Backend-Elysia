@@ -4,8 +4,10 @@ import {
   DeliveryStatus,
   DeliveryType,
 } from "../../prisma/generated/kku_client";
+import { filePathConfig } from "../config/file-path.config";
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
+import { ImageFileHandler } from "../utils/file.utils";
 
 const db = kkuDB.kkuPrismaClient;
 
@@ -59,7 +61,7 @@ export abstract class DeliveryService {
     if (existingDelivery) {
       throw new HttpError({
         statusCode: 401,
-        message: "บิลนี้ได้มีการจัดทำขนส่งแล้ว",
+        message: "บิลนี้ได้มีการบันทึกจัดทำขนส่งแล้ว",
         type: "fail",
       });
     }
@@ -107,6 +109,28 @@ export abstract class DeliveryService {
       where: {
         order: {
           branchId: branchId,
+        },
+      },
+      include: {
+        DeliveryDriver: {
+          select: {
+            assignedAt: true,
+            deliveryId: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+                name: true,
+                phoneNumber: true,
+              },
+            },
+          },
+        },
+        order: {
+          include: {
+            PaymentOrder: true,
+          },
         },
       },
       orderBy: {
@@ -180,9 +204,9 @@ export abstract class DeliveryService {
     });
   }
 
-  public static async updateStatusDelivery(
+  public static async deliveryDone(
     orderId: string,
-    status: DeliveryStatus
+    options: { slipImage?: File }
   ) {
     const delivery = await db.delivery.findUnique({
       where: { orderId },
@@ -205,12 +229,105 @@ export abstract class DeliveryService {
       });
     }
 
-    await db.delivery.update({
-      where: { orderId },
-      data: {
-        status,
-        completedAt: status === "DELIVERED" ? new Date() : undefined,
+    const order = await db.order.findUnique({
+      where: {
+        id: orderId,
       },
+      select: {
+        type: true,
+        totalPrice: true,
+        status: true,
+      },
+    });
+
+    if (!order) {
+      throw new HttpError({
+        statusCode: 404,
+        message: "ไม่พบบิลนี้",
+        type: "fail",
+      });
+    }
+
+    if (order.type === "DEPOSITED" && order.status !== "COMPLETED") {
+      if (!options.slipImage) {
+        throw new HttpError({
+          statusCode: 400,
+          message: "ไม่มีหลักฐานการชำระเงิน",
+          type: "fail",
+        });
+      }
+      const paymentOrder = await db.paymentOrder.findUnique({
+        where: { orderId: orderId },
+        select: { deposit: true, amountRecevied: true },
+      });
+
+      if (!paymentOrder) {
+        throw new HttpError({
+          statusCode: 404,
+          message: "ไม่พบการชำระเงินบิลนี้",
+          type: "fail",
+        });
+      }
+
+      let amountRecevied: number;
+
+      if (
+        order.type === "DEPOSITED" &&
+        order.totalPrice &&
+        paymentOrder.deposit
+      ) {
+        amountRecevied = order.totalPrice - paymentOrder.deposit;
+      } else {
+        throw new HttpError({
+          message: "เกิดข้อผิดพลาดบางอย่าง...",
+          statusCode: 400,
+          type: "fail",
+        });
+      }
+
+      const afterPayment = await db.paymentOrder.update({
+        where: { orderId: orderId },
+        data: {
+          amountRecevied: amountRecevied,
+          paidAt: new Date(),
+        },
+        select: { orderId: true, amountRecevied: true },
+      });
+
+      const pathImage = await new ImageFileHandler(
+        filePathConfig.SLIP_IMAGE
+      ).uploadFile(options.slipImage);
+
+      await db.paymentOrderSlip.create({
+        data: {
+          paymentOrderId: orderId,
+          imageUrl: pathImage,
+        },
+        select: { id: true },
+      });
+
+      if (
+        afterPayment.amountRecevied &&
+        afterPayment.amountRecevied + paymentOrder.deposit ===
+          order.totalPrice
+      ) {
+        await db.order.update({
+          where: { id: orderId },
+          data: { status: "COMPLETED" },
+          select: { id: true },
+        });
+      }
+
+      //   console.log("Have payment...");
+    }
+
+    await db.delivery.update({
+      where: { orderId: orderId },
+      data: {
+        status: "DELIVERED",
+        completedAt: new Date(),
+      },
+      select: { orderId: true },
     });
   }
 

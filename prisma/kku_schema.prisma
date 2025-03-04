@@ -99,10 +99,11 @@ model User {
     branchId String?
     branch   Branch? @relation(fields: [branchId], references: [id])
 
-    Customer       Customer[]
-    StockInHistory StockInHistory[]
-    Order          Order[]
-    DeliveryDriver DeliveryDriver[]
+    Customer             Customer[]
+    Order                Order[]
+    DeliveryDriver       DeliveryDriver[]
+    StockInHistory       StockInHistory[] @relation(name: "CreatedByUser")
+    CancelStockInHistory StockInHistory[] @relation(name: "CanceledByUser")
 }
 
 model CustomerGroup {
@@ -192,11 +193,17 @@ model StockInHistory {
     note        String?
     createdAt   DateTime    @default(now())
 
-    userId      String
-    user        User          @relation(fields: [userId], references: [id])
-    branchId    String
-    branch      Branch        @relation(fields: [branchId], references: [id])
-    StockInItem StockInItem[]
+    isCanceled Boolean   @default(false)
+    canceledAt DateTime?
+    cancelNote String?
+
+    canceledBy     String?
+    canceledByUser User?         @relation(fields: [canceledBy], references: [id], name: "CanceledByUser")
+    userId         String
+    user           User          @relation(fields: [userId], references: [id], name: "CreatedByUser")
+    branchId       String
+    branch         Branch        @relation(fields: [branchId], references: [id])
+    StockInItem    StockInItem[]
 }
 
 model StockInItem {
@@ -282,14 +289,23 @@ model PaymentOrder {
     amountRecevied Float?
     change         Float?
     deposit        Float?
-    slipImage      String?
     credit         Int?
     discount       Float?
     createdAt      DateTime  @default(now())
     paidAt         DateTime?
 
-    paymentMethodId String
-    paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+    paymentMethodId  String
+    paymentMethod    PaymentMethod      @relation(fields: [paymentMethodId], references: [id])
+    PaymentOrderSlip PaymentOrderSlip[]
+}
+
+model PaymentOrderSlip {
+    id       String @id @default(uuid())
+    imageUrl String @unique
+
+    paymentOrderId String
+    paymentOrder   PaymentOrder @relation(fields: [paymentOrderId], references: [orderId])
+    createdAt      DateTime     @default(now())
 }
 
 model Delivery {

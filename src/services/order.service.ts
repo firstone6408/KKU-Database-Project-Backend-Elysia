@@ -173,10 +173,24 @@ export abstract class OrderService {
       totalPrice += orderItem.sellPrice * orderItem.quantity;
     }
 
+    // check delivery
+    const delivery = await db.delivery.findUnique({
+      where: { orderId: options.orderId },
+      select: { fee: true },
+    });
+    if (delivery) {
+      totalPrice += delivery.fee;
+    }
+
+    if (options.discount) {
+      totalPrice -= options.discount;
+    }
+
     // check order status
     let paymentCondition: any = {
       orderId: options.orderId,
       paymentMethodId: options.paymentMethodId,
+      discount: options.discount,
     };
     let orderStatus: OrderStatus = "UNPAID";
 
@@ -229,7 +243,7 @@ export abstract class OrderService {
         }
         paymentCondition.amountRecevied = options.amountRecevied;
         paymentCondition.change = options.change;
-        paymentCondition.discount = options.discount;
+
         orderStatus = "COMPLETED";
         paymentCondition.paidAt = new Date();
         break;
@@ -242,17 +256,24 @@ export abstract class OrderService {
         });
     }
 
-    if (options.slipImage) {
-      const pathFile = await new ImageFileHandler(
-        filePathConfig.SLIP_IMAGE
-      ).uploadFile(options.slipImage);
-      paymentCondition.slipImage = pathFile;
-    }
     // create payment order
     await db.paymentOrder.create({
       data: paymentCondition,
       select: { paymentMethodId: true },
     });
+
+    if (options.slipImage) {
+      const pathFile = await new ImageFileHandler(
+        filePathConfig.SLIP_IMAGE
+      ).uploadFile(options.slipImage);
+      await db.paymentOrderSlip.create({
+        data: {
+          paymentOrderId: options.orderId,
+          imageUrl: pathFile,
+        },
+        select: { id: true },
+      });
+    }
 
     // confirm/update order
     await db.order.update({
@@ -292,6 +313,104 @@ export abstract class OrderService {
         },
       });
     }
+  }
+
+  public static async payOrder(
+    orderId: string,
+    options: {
+      slipImage: File;
+    }
+  ) {
+    const existingOrder = await db.order.findUnique({
+      where: { id: orderId },
+      select: {
+        status: true,
+        type: true,
+        PaymentOrder: true,
+        totalPrice: true,
+      },
+    });
+
+    if (!existingOrder) {
+      throw new HttpError({
+        message: "ไม่พบบิลนี้",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
+
+    switch (existingOrder.status) {
+      case "COMPLETED":
+        throw new HttpError({
+          message: "บิลนี้ถูกชำระเงินแล้ว",
+          statusCode: 400,
+          type: "fail",
+        });
+      default:
+        break;
+    }
+
+    let amountRecevied: number;
+
+    const paymentOrder = existingOrder.PaymentOrder;
+
+    if (!paymentOrder || !existingOrder.totalPrice) {
+      throw new HttpError({
+        message: "ไม่พบข้อมูลการชำระเงิน",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
+
+    switch (existingOrder.type) {
+      case "DEPOSITED":
+      case "DEPOSITED_CREDIT_USED":
+        if (!paymentOrder.deposit) {
+          throw new HttpError({
+            message: "ไม่พบเงินมัดจำ",
+            statusCode: 404,
+            type: "fail",
+          });
+        }
+        amountRecevied = existingOrder.totalPrice - paymentOrder.deposit;
+        break;
+      case "CREDIT_USED":
+        amountRecevied = existingOrder.totalPrice;
+        break;
+      default:
+        throw new HttpError({
+          message: "เกิดข้อผิดพลาดบางอย่าง",
+          statusCode: 400,
+          type: "fail",
+        });
+    }
+
+    await db.paymentOrder.update({
+      where: { orderId: orderId },
+      data: {
+        amountRecevied: amountRecevied,
+        paidAt: new Date(),
+      },
+      select: { orderId: true },
+    });
+
+    await db.order.update({
+      where: { id: orderId },
+      data: { status: "COMPLETED" },
+      select: { id: true },
+    });
+
+    const filepath = await new ImageFileHandler(
+      filePathConfig.SLIP_IMAGE
+    ).uploadFile(options.slipImage);
+
+    await db.paymentOrderSlip.create({
+      data: {
+        paymentOrderId: orderId,
+        imageUrl: filepath,
+      },
+      select: { paymentOrderId: true },
+    });
   }
 
   public static async cancelOrder(id: string) {
@@ -345,8 +464,10 @@ export abstract class OrderService {
         PaymentOrder: {
           include: {
             paymentMethod: true,
+            PaymentOrderSlip: true,
           },
         },
+        Delivery: true,
       },
     });
 
@@ -398,8 +519,10 @@ export abstract class OrderService {
         PaymentOrder: {
           include: {
             paymentMethod: true,
+            PaymentOrderSlip: true,
           },
         },
+        Delivery: true,
       },
     });
 

@@ -59,7 +59,7 @@ export abstract class UserService {
     if (profileImage) {
       const pathImage = await new ImageFileHandler(
         filePathConfig.USER_PROFILE
-      ).saveFile(profileImage);
+      ).uploadFile(profileImage);
       data.profileImage = pathImage;
     }
 

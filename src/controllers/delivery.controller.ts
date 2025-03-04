@@ -80,6 +80,7 @@ export const deliveryController = new Elysia({
           ({ set, body }) =>
             withRequestHandling(async () => {
               const { orderId, options } = body;
+              // console.log("Body:", body);
               await DeliveryService.createDelivery(orderId, options);
               set.status = "Created";
               return { payload: { data: null }, message: "" };
@@ -119,19 +120,19 @@ export const deliveryController = new Elysia({
         )
 
         .put(
-          "/status",
+          "/done",
           ({ body }) =>
             withRequestHandling(async () => {
-              await DeliveryService.updateStatusDelivery(
-                body.orderId,
-                body.status
-              );
+              console.log("Body:", body);
+              await DeliveryService.deliveryDone(body.orderId, {
+                slipImage: body.slipImage,
+              });
               return { payload: { data: null } };
             }),
           {
             body: t.Object({
               orderId: t.String(),
-              status: t.Enum(DeliveryStatus),
+              slipImage: t.Optional(t.File()),
             }),
           }
         )
