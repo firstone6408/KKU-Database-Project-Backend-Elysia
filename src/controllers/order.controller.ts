@@ -123,10 +123,11 @@ export const orderController = new Elysia({
 
         .get(
           "/branch/:branchId",
-          ({ params }) =>
+          ({ params, query }) =>
             withRequestHandling(async () => {
               const orders = await OrderService.listOrdersByBranchId(
-                params.branchId
+                params.branchId,
+                query
               );
               return { payload: { data: orders } };
             }),

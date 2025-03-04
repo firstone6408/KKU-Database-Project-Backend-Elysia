@@ -104,13 +104,75 @@ export abstract class DeliveryService {
     });
   }
 
-  public static async listDeliveriesByBranchId(branchId: string) {
-    const deliveries = await db.delivery.findMany({
-      where: {
-        order: {
-          branchId: branchId,
-        },
+  public static async listDeliveriesByBranchId(
+    branchId: string,
+    user: JwtPayload,
+    query?: {
+      trackNumber?: string;
+      type?: string;
+      distStart?: string;
+      distEnd?: string;
+      startDate?: string;
+      endDate?: string;
+      isMe?: string;
+    }
+  ) {
+    const whereConditions: any = {
+      order: {
+        branchId: branchId,
       },
+    };
+
+    if (query?.trackNumber) {
+      whereConditions.trackNumber = {
+        contains: query.trackNumber,
+      };
+    }
+
+    if (query?.type) {
+      whereConditions.type = query.type;
+    }
+
+    if (query?.distStart && query?.distEnd) {
+      whereConditions.distance = {
+        gte: query.distStart,
+        lte: query.distEnd,
+      };
+    } else if (query?.distStart) {
+      whereConditions.distance = {
+        gte: query.distStart,
+      };
+    } else if (query?.distEnd) {
+      whereConditions.distance = {
+        lte: query.distEnd,
+      };
+    }
+
+    if (query?.startDate && query?.endDate) {
+      whereConditions.createdAt = {
+        gte: new Date(query.startDate),
+        lte: new Date(query.endDate),
+      };
+    } else if (query?.startDate) {
+      whereConditions.createdAt = {
+        gte: new Date(query.startDate),
+      };
+    } else if (query?.endDate) {
+      whereConditions.createdAt = {
+        lte: new Date(query.endDate),
+      };
+    }
+
+    if (query?.isMe) {
+      whereConditions.DeliveryDriver = {
+        some: {
+          userId: user.id,
+        },
+      };
+    }
+
+    const deliveries = await db.delivery.findMany({
+      where: whereConditions,
       include: {
         DeliveryDriver: {
           select: {

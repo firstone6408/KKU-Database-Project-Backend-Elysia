@@ -69,11 +69,12 @@ export const customerController = new Elysia({
 
         .get(
           "/branch/:branchId",
-          ({ params }) =>
+          ({ params, query }) =>
             withRequestHandling(async () => {
               const customers =
                 await CustomerService.listCustomersByBranchId(
-                  params.branchId
+                  params.branchId,
+                  query
                 );
               return { payload: { data: customers } };
             }),

@@ -2,6 +2,7 @@
 
 import { kkuDB } from "../database/prisma/kku.prisma";
 import { HttpError } from "../middlewares/error.middleware";
+import { QeuryParams } from "../schemas/request.schema";
 
 const db = kkuDB.kkuPrismaClient;
 
@@ -65,7 +66,14 @@ export abstract class CustomerService {
     });
   }
 
-  public static async listCustomersByBranchId(branchId: string) {
+  public static async listCustomersByBranchId(
+    branchId: string,
+    search?: {
+      name?: string;
+      customerGroupId?: string;
+      customerCode?: string;
+    }
+  ) {
     const existingBranch = await db.branch.findUnique({
       where: { id: branchId },
       select: { id: true },
@@ -79,8 +87,30 @@ export abstract class CustomerService {
       });
     }
 
+    const whereConditions: any = {
+      branchId: branchId,
+    };
+
+    if (search?.name) {
+      whereConditions.name = {
+        contains: search.name, // ใช้ contains เพื่อค้นหาชื่อที่มีคำค้น
+      };
+    }
+
+    if (search?.customerGroupId) {
+      whereConditions.customerGroupId = search.customerGroupId;
+    }
+
+    if (search?.customerCode) {
+      whereConditions.customerCode = {
+        contains: search.customerCode, // ใช้ contains หากต้องการค้นหาชิ้นส่วนของ customerCode
+        // หรือใช้ startsWith หากต้องการให้ค้นหาเริ่มต้นด้วย customerCode
+        // startsWith: search.customerCode,
+      };
+    }
+
     return await db.customer.findMany({
-      where: { branchId: branchId },
+      where: whereConditions,
       include: {
         customerGroup: {
           select: {
@@ -96,6 +126,9 @@ export abstract class CustomerService {
             name: true,
           },
         },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
   }

@@ -6,7 +6,16 @@ import { HttpError } from "../middlewares/error.middleware";
 const db = kkuDB.kkuPrismaClient;
 
 export abstract class StockHistoryService {
-  public static async listStockInHistories(branchId: string) {
+  public static async listStockInHistories(
+    branchId: string,
+    query?: {
+      refCode?: string;
+      distributor?: string;
+      startDate?: string;
+      endDate?: string;
+      isCanceled?: string;
+    }
+  ) {
     // check branch
     const existingBranch = await db.branch.findUnique({
       where: { id: branchId },
@@ -21,8 +30,44 @@ export abstract class StockHistoryService {
       });
     }
 
+    const whereConditions: any = {
+      branchId: branchId,
+    };
+
+    if (query?.refCode) {
+      whereConditions.refCode = {
+        contains: query.refCode,
+      };
+    }
+
+    // Add filter for distributor if it exists
+    if (query?.distributor) {
+      whereConditions.distributor = {
+        contains: query.distributor,
+      };
+    }
+
+    if (query?.startDate && query?.endDate) {
+      whereConditions.createdAt = {
+        gte: new Date(query.startDate),
+        lte: new Date(query.endDate),
+      };
+    } else if (query?.startDate) {
+      whereConditions.createdAt = {
+        gte: new Date(query.startDate),
+      };
+    } else if (query?.endDate) {
+      whereConditions.createdAt = {
+        lte: new Date(query.endDate),
+      };
+    }
+
+    if (query?.isCanceled) {
+      whereConditions.isCanceled = query.isCanceled === "true"; // Convert to boolean
+    }
+
     const stockInHistories = await db.stockInHistory.findMany({
-      where: { branchId: branchId },
+      where: whereConditions,
       include: {
         user: {
           select: {

@@ -225,11 +225,29 @@ export abstract class ProductService {
     return product;
   }
 
-  public static async listProductsByBranchId(branchId: string) {
+  public static async listProductsByBranchId(
+    branchId: string,
+    query?: {
+      productCode?: string;
+      categoryId?: string;
+    }
+  ) {
+    const whereConditions: any = {
+      isDeleted: false,
+    };
+
+    if (query?.categoryId) {
+      whereConditions.categoryId = query.categoryId;
+    }
+
+    if (query?.productCode) {
+      whereConditions.productCode = {
+        contains: query.productCode,
+      };
+    }
+
     const products = await db.product.findMany({
-      where: {
-        isDeleted: false,
-      },
+      where: whereConditions,
       include: {
         category: {
           select: {
@@ -319,31 +337,31 @@ export abstract class ProductService {
     return products;
   }
 
-  public static async listUnstockedProductsByBranchId(branchId: string) {
-    const unstockedProducts = await db.product.findMany({
-      where: {
-        AND: [
-          { isDeleted: false },
-          {
-            NOT: {
-              ProductSaleBranch: {
-                some: { branchId: branchId },
-              },
-            },
-          },
-        ],
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            categoryCode: true,
-            name: true,
-          },
-        },
-      },
-    });
+  // public static async listUnstockedProductsByBranchId(branchId: string) {
+  //   const unstockedProducts = await db.product.findMany({
+  //     where: {
+  //       AND: [
+  //         { isDeleted: false },
+  //         {
+  //           NOT: {
+  //             ProductSaleBranch: {
+  //               some: { branchId: branchId },
+  //             },
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     include: {
+  //       category: {
+  //         select: {
+  //           id: true,
+  //           categoryCode: true,
+  //           name: true,
+  //         },
+  //       },
+  //     },
+  //   });
 
-    return unstockedProducts;
-  }
+  //   return unstockedProducts;
+  // }
 }

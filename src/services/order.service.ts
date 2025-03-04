@@ -474,7 +474,16 @@ export abstract class OrderService {
     return orders;
   }
 
-  public static async listOrdersByBranchId(branchId: string) {
+  public static async listOrdersByBranchId(
+    branchId: string,
+    query?: {
+      orderCode?: string;
+      orderType?: string;
+      orderStatus?: string;
+      startDate?: string;
+      endDate?: string;
+    }
+  ) {
     // check branch
     const existingBranch = await db.branch.findUnique({
       where: { id: branchId },
@@ -489,10 +498,41 @@ export abstract class OrderService {
       });
     }
 
+    const whereConditions: any = {
+      branchId: branchId,
+    };
+
+    if (query?.orderCode) {
+      whereConditions.orderCode = {
+        contains: query.orderCode,
+      };
+    }
+
+    if (query?.orderType) {
+      whereConditions.type = query.orderType;
+    }
+
+    if (query?.orderStatus) {
+      whereConditions.status = query.orderStatus;
+    }
+
+    if (query?.startDate && query?.endDate) {
+      whereConditions.createdAt = {
+        gte: new Date(query.startDate),
+        lte: new Date(query.endDate),
+      };
+    } else if (query?.startDate) {
+      whereConditions.createdAt = {
+        gte: new Date(query.startDate),
+      };
+    } else if (query?.endDate) {
+      whereConditions.createdAt = {
+        lte: new Date(query.endDate),
+      };
+    }
+
     const orders = await db.order.findMany({
-      where: {
-        branchId: branchId,
-      },
+      where: whereConditions,
       include: {
         StockOutHistory: {
           include: {
@@ -524,6 +564,7 @@ export abstract class OrderService {
         },
         Delivery: true,
       },
+      orderBy: [{ createdAt: "desc" }, { status: "desc" }],
     });
 
     return orders;

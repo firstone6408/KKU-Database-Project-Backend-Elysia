@@ -121,10 +121,11 @@ export const productController = new Elysia({
 
         .get(
           "/branch/:branchId",
-          ({ params }) =>
+          ({ params, query }) =>
             withRequestHandling(async () => {
               const products = await ProductService.listProductsByBranchId(
-                params.branchId
+                params.branchId,
+                query
               );
               return { payload: { data: products } };
             }),
@@ -148,18 +149,18 @@ export const productController = new Elysia({
           }
         )
 
-        .get(
-          "/branch/:branchId/unstocked-products",
-          ({ params }) =>
-            withRequestHandling(async () => {
-              const products =
-                await ProductService.listUnstockedProductsByBranchId(
-                  params.branchId
-                );
-              return { payload: { data: products } };
-            }),
-          {
-            params: t.Object({ branchId: t.String() }),
-          }
-        )
+    // .get(
+    //   "/branch/:branchId/unstocked-products",
+    //   ({ params }) =>
+    //     withRequestHandling(async () => {
+    //       const products =
+    //         await ProductService.listUnstockedProductsByBranchId(
+    //           params.branchId
+    //         );
+    //       return { payload: { data: products } };
+    //     }),
+    //   {
+    //     params: t.Object({ branchId: t.String() }),
+    //   }
+    // )
   );

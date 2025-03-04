@@ -52,11 +52,12 @@ export const stockHistoryController = new Elysia({
     (app) =>
       app.get(
         "/in/branch/:branchId",
-        ({ params }) =>
+        ({ params, query }) =>
           withRequestHandling(async () => {
             const stockInHistories =
               await StockHistoryService.listStockInHistories(
-                params.branchId
+                params.branchId,
+                query
               );
             return { payload: { data: stockInHistories } };
           }),

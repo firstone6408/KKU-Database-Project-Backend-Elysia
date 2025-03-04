@@ -23,11 +23,13 @@ export const deliveryController = new Elysia({
       app
         .get(
           "/branch/:branchId",
-          ({ params }) =>
+          ({ params, query, store: { userJwt } }) =>
             withRequestHandling(async () => {
               const deliveries =
                 await DeliveryService.listDeliveriesByBranchId(
-                  params.branchId
+                  params.branchId,
+                  userJwt,
+                  query
                 );
               return { payload: { data: deliveries } };
             }),
