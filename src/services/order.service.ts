@@ -435,9 +435,40 @@ export abstract class OrderService {
     });
   }
 
-  public static async listOrdersByUserId(userId: string) {
+  public static async listOrdersByBranchIdAndUserId(
+    branchId: string,
+    userId: string,
+    options?: {
+      status?: OrderStatus;
+    }
+  ) {
+    // check branch
+    const existingBranch = await db.branch.findUnique({
+      where: { id: branchId },
+      select: { id: true },
+    });
+
+    if (!existingBranch) {
+      throw new HttpError({
+        message: "ไม่พบสาขาที่ระบุ",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
+
+    const whereConditions: any = {
+      branchId: branchId,
+      userId: userId,
+    };
+
+    if (options) {
+      if (options.status) {
+        whereConditions.status = options.status;
+      }
+    }
+
     const orders = await db.order.findMany({
-      where: { userId: userId },
+      where: whereConditions,
       include: {
         StockOutHistory: {
           include: {
@@ -568,5 +599,78 @@ export abstract class OrderService {
     });
 
     return orders;
+  }
+
+  public static async listOrdersByBranchIdAndOrderId(
+    branchId: string,
+    orderId: string
+  ) {
+    // check branch
+    const existingBranch = await db.branch.findUnique({
+      where: { id: branchId },
+      select: { id: true },
+    });
+
+    if (!existingBranch) {
+      throw new HttpError({
+        message: "ไม่พบสาขาที่ระบุ",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
+
+    // check order id
+    const existingOrder = await db.order.findUnique({
+      where: { id: orderId },
+      select: { id: true },
+    });
+
+    if (!existingOrder) {
+      throw new HttpError({
+        message: "ไม่พบบิลนี้",
+        statusCode: 404,
+        type: "fail",
+      });
+    }
+
+    const order = await db.order.findUnique({
+      where: {
+        branchId: branchId,
+        id: orderId,
+      },
+      include: {
+        StockOutHistory: {
+          include: {
+            product: {
+              include: {
+                category: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            name: true,
+          },
+        },
+        customer: {
+          include: {
+            customerGroup: true,
+          },
+        },
+        PaymentOrder: {
+          include: {
+            paymentMethod: true,
+            PaymentOrderSlip: true,
+          },
+        },
+        Delivery: true,
+      },
+    });
+
+    return order;
   }
 }

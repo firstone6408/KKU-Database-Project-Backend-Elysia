@@ -108,16 +108,35 @@ export const orderController = new Elysia({
         )
 
         .get(
-          "/user/:userId",
+          "/branch/:branchId/user/:userId/pending",
           ({ params }) =>
             withRequestHandling(async () => {
-              const orders = await OrderService.listOrdersByUserId(
-                params.userId
-              );
+              const orders =
+                await OrderService.listOrdersByBranchIdAndUserId(
+                  params.branchId,
+                  params.userId,
+                  { status: "PENDING" }
+                );
               return { payload: { data: orders } };
             }),
           {
-            params: t.Object({ userId: t.String() }),
+            params: t.Object({ userId: t.String(), branchId: t.String() }),
+          }
+        )
+
+        .get(
+          "/branch/:branchId/user/:userId",
+          ({ params }) =>
+            withRequestHandling(async () => {
+              const orders =
+                await OrderService.listOrdersByBranchIdAndUserId(
+                  params.branchId,
+                  params.userId
+                );
+              return { payload: { data: orders } };
+            }),
+          {
+            params: t.Object({ userId: t.String(), branchId: t.String() }),
           }
         )
 
@@ -132,5 +151,24 @@ export const orderController = new Elysia({
               return { payload: { data: orders } };
             }),
           { params: t.Object({ branchId: t.String() }) }
+        )
+
+        .get(
+          "/branch/:branchId/order/:orderId",
+          ({ params }) =>
+            withRequestHandling(async () => {
+              const orders =
+                await OrderService.listOrdersByBranchIdAndOrderId(
+                  params.branchId,
+                  params.orderId
+                );
+              return { payload: { data: orders } };
+            }),
+          {
+            params: t.Object({
+              branchId: t.String(),
+              orderId: t.String(),
+            }),
+          }
         )
   );

@@ -149,16 +149,16 @@ export abstract class DeliveryService {
     }
 
     if (query?.startDate && query?.endDate) {
-      whereConditions.createdAt = {
+      whereConditions.sendDate = {
         gte: new Date(query.startDate),
         lte: new Date(query.endDate),
       };
     } else if (query?.startDate) {
-      whereConditions.createdAt = {
+      whereConditions.sendDate = {
         gte: new Date(query.startDate),
       };
     } else if (query?.endDate) {
-      whereConditions.createdAt = {
+      whereConditions.sendDate = {
         lte: new Date(query.endDate),
       };
     }
