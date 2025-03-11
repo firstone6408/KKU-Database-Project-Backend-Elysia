@@ -40,6 +40,7 @@ export const userController = new Elysia({
               profileImage: t.Optional(t.File()),
               phoneNumber: t.Optional(t.String()),
               role: t.Enum(UserRole),
+              branchId: t.String(),
             }),
           }
         )
@@ -102,6 +103,8 @@ export const userController = new Elysia({
               const users = await UserService.listUsersByBranchId(
                 params.branchId
               );
+              //  console.log(params.branchId);
+              //console.log(users);
               return { payload: { data: users } };
             }),
           { params: t.Object({ branchId: t.String() }) }

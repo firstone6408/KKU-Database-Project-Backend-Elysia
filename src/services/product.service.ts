@@ -38,7 +38,6 @@ export abstract class ProductService {
       where: {
         OR: [
           { productCode: options.productCode },
-          { name: options.name },
           { barcode: options.barcode },
         ],
       },
@@ -286,6 +285,7 @@ export abstract class ProductService {
   }
 
   public static async listProductsAvailableByBranchId(branchId: string) {
+    // console.log(branchId);
     const products = await db.product.findMany({
       where: {
         isDeleted: false,

@@ -195,9 +195,7 @@ export abstract class DeliveryService {
           },
         },
       },
-      orderBy: {
-        status: "asc",
-      },
+      orderBy: [{ sendDate: "desc" }, { status: "asc" }],
     });
 
     return deliveries;
@@ -402,6 +400,7 @@ export abstract class DeliveryService {
         user: {
           branchId: branchId,
           role: "TRANSPORTER",
+          status: "ACTIVE",
         },
       },
       include: {
@@ -438,6 +437,7 @@ export abstract class DeliveryService {
             },
           },
         },
+        status: "ACTIVE",
       },
       select: {
         id: true,

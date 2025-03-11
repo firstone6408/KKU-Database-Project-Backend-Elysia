@@ -50,6 +50,15 @@ export abstract class StockService {
       0
     );
 
+    const p = await db.product.findFirst({ select: { id: true } });
+
+    if (!p) {
+      throw new HttpError({
+        message: "ไม่สามารถเพิ่ม Stock ได้เนื่องจากไม่มีสินค้าในระบบ",
+        statusCode: 404,
+      });
+    }
+
     // create stock in history
     const stockInHistoryId = (
       await db.stockInHistory.create({

@@ -31,6 +31,7 @@ export abstract class UserService {
     email: string;
     password: string;
     role: UserRole;
+    branchId: string;
   }) {
     const userExisting = await db.user.findFirst({
       where: {
@@ -146,8 +147,19 @@ export abstract class UserService {
   public static async listUsersByBranchId(branchId: string) {
     return await db.user.findMany({
       where: { branchId: branchId },
-      select: standardResponse,
-      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        name: true,
+        profileImage: true,
+        phoneNumber: true,
+        role: true,
+        status: true,
+        lastLogin: true,
+        branch: true,
+      },
+      // orderBy: { createdAt: "desc" },
     });
   }
 }
