@@ -69,6 +69,23 @@ export const deliveryController = new Elysia({
             }),
           }
         )
+        .put(
+          "/done",
+          ({ body }) =>
+            withRequestHandling(async () => {
+              console.log("Body:", body);
+              await DeliveryService.deliveryDone(body.orderId, {
+                slipImage: body.slipImage,
+              });
+              return { payload: { data: null } };
+            }),
+          {
+            body: t.Object({
+              orderId: t.String(),
+              slipImage: t.Optional(t.File()),
+            }),
+          }
+        )
   )
   .guard(
     {
@@ -117,24 +134,6 @@ export const deliveryController = new Elysia({
             body: t.Object({
               orderId: t.String(),
               userIds: t.Array(t.String()),
-            }),
-          }
-        )
-
-        .put(
-          "/done",
-          ({ body }) =>
-            withRequestHandling(async () => {
-              console.log("Body:", body);
-              await DeliveryService.deliveryDone(body.orderId, {
-                slipImage: body.slipImage,
-              });
-              return { payload: { data: null } };
-            }),
-          {
-            body: t.Object({
-              orderId: t.String(),
-              slipImage: t.Optional(t.File()),
             }),
           }
         )

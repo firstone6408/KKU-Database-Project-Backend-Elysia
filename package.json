@@ -13,6 +13,8 @@
     "@elysiajs/static": "^1.1.1",
     "@elysiajs/swagger": "^1.1.6",
     "@prisma/client": "6.0.1",
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^5.1.1",
     "elysia": "latest",
     "jose": "^5.9.6",
     "mysql2": "^3.11.5",

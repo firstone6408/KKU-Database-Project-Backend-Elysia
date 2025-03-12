@@ -56,6 +56,7 @@ export const orderController = new Elysia({
                   sellPrice: t.Numeric(),
                   quantity: t.Numeric(),
                   productId: t.String(),
+                  length: t.Numeric(),
                 })
               ),
               orderType: t.Enum(OrderType),

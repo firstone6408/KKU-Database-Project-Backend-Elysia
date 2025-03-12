@@ -226,6 +226,7 @@ model StockOutHistory {
     type      StockOutType
     note      String?
     sellPrice Float
+    length    Float?
     createdAt DateTime     @default(now())
 
     productId String

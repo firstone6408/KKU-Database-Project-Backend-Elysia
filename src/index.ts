@@ -23,7 +23,11 @@ import { orderController } from "./controllers/order.controller";
 import { stockHistoryController } from "./controllers/stock-history.controller";
 import { deliveryController } from "./controllers/delivery.controller";
 
-const app = new Elysia()
+const app = new Elysia({
+  serve: {
+    idleTimeout: 30,
+  },
+})
   //
   // Middleware
   //

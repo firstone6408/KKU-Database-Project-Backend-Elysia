@@ -89,6 +89,7 @@ export abstract class OrderService {
       sellPrice: number;
       quantity: number;
       productId: string;
+      length?: number;
     }[];
     //  orderStatus: OrderStatus;
     orderType: OrderType;
@@ -150,6 +151,18 @@ export abstract class OrderService {
           type: "fail",
         });
       }
+      const product = await db.product.findFirst({
+        where: { id: orderItem.productId },
+        select: { unit: true },
+      });
+
+      if (!product) {
+        throw new HttpError({
+          statusCode: 404,
+          message: `ไม่พบสินค้า`,
+          type: "fail",
+        });
+      }
 
       const productSaleBranch = await db.productSaleBranch.findUnique({
         where: {
@@ -170,7 +183,18 @@ export abstract class OrderService {
       }
 
       // calculate totalPrice
-      totalPrice += orderItem.sellPrice * orderItem.quantity;
+      if (product.unit === "METER") {
+        if (!orderItem.length) {
+          throw new HttpError({
+            message: "ไม่ได้ใส่ความยาว",
+            statusCode: 400,
+          });
+        }
+        totalPrice +=
+          orderItem.sellPrice * (orderItem.quantity * orderItem.length);
+      } else {
+        totalPrice += orderItem.sellPrice * orderItem.quantity;
+      }
     }
 
     // check delivery
@@ -289,6 +313,29 @@ export abstract class OrderService {
     // update stock and stock out history
     for (let i = 0; i < orderItems.length; i += 1) {
       const orderItem = orderItems[i];
+
+      const product = await db.product.findFirst({
+        where: { id: orderItem.productId },
+        select: { unit: true },
+      });
+
+      if (!product) {
+        throw new HttpError({
+          message: "ไม่พบสินค้า",
+          statusCode: 404,
+        });
+      }
+
+      let q: number = orderItem.quantity;
+      if (product.unit === "METER") {
+        if (!orderItem.length) {
+          throw new HttpError({
+            message: "ไม่ได้ใส่ความยาว",
+            statusCode: 404,
+          });
+        }
+        q = orderItem.quantity * orderItem.length;
+      }
       // update stock
       const stockUpdate = await db.stock.update({
         where: {
@@ -297,7 +344,7 @@ export abstract class OrderService {
             branchId: existingOrder.branchId,
           },
         },
-        data: { quantity: { decrement: orderItem.quantity } },
+        data: { quantity: { decrement: q } },
         select: { id: true },
       });
 
@@ -310,6 +357,7 @@ export abstract class OrderService {
           productId: orderItem.productId,
           stockId: stockUpdate.id,
           sellPrice: orderItem.sellPrice,
+          length: orderItem.length,
         },
       });
     }
